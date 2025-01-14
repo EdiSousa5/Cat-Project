@@ -10,12 +10,12 @@
   </style>
 </head>
 <body>
-  <script type="module">
-    import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.min.js';
-
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
     // Cena e renderizador
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x2a2a2a); // Fundo escuro
+    scene.background = new THREE.Color(0x00CED1);
     const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
@@ -23,77 +23,136 @@
 
     // Câmera
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(2, 3, 8); // Movida mais para trás e para a esquerda
-    camera.lookAt(0, 1.5, -3);
+    camera.position.set(5, 3, 5); // Posição inicial da câmera
+
+    // OrbitControls para movimentar a câmera
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.target.set(-2, 1, 2); // Foco no gato
+    controls.enableDamping = true; // Movimento suave
+    controls.dampingFactor = 0.1;
+    controls.maxPolarAngle = Math.PI / 2; // Restringir movimento abaixo do chão (opcional)
 
     // Luz ambiente
-    const ambientLight = new THREE.AmbientLight(0xffd6a5, 0.7); // Luz quente
+    const ambientLight = new THREE.AmbientLight(0xffd6a5, 1);
     scene.add(ambientLight);
 
-    // Luz direcional simulando a iluminação do fogo
-    const fireLight = new THREE.PointLight(0xff5500, 1.5, 15);
-    fireLight.position.set(0, 2, -3);
-    fireLight.castShadow = true;
-    scene.add(fireLight);
+    // Luz direcional (de cima)
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(0, 10, 0); // Luz vindo de cima
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
 
-    // Chão
-    const floorGeometry = new THREE.PlaneGeometry(20, 20);
-    const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
-    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-    floor.rotation.x = -Math.PI / 2;
-    floor.receiveShadow = true;
-    scene.add(floor);
+    // Gato (material preto)
+    const catMaterial = new THREE.MeshStandardMaterial({ color: 0x171617 }); // Cor preta
+    const tailMaterial = new THREE.MeshStandardMaterial({ color: 0xE4E4E4 }); // Cor branco escuro
+    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00 }); // Cor amarela
+    const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0xC26412 }); // Cor laranja escuro
+    const noseMaterial = new THREE.MeshStandardMaterial({ color: 0xDA88A3 }); // Cor laranja escuro
 
-    // Lareira
-    const fireplaceMaterial = new THREE.MeshStandardMaterial({ color: 0x555555 });
-    const fireplaceBase = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 1), fireplaceMaterial);
-    fireplaceBase.position.set(0, 1.5, -3);
-    fireplaceBase.castShadow = true;
-    scene.add(fireplaceBase);
+    // Criar o grupo para o gato
+    const catGroup = new THREE.Group();
 
-    const fireplaceTop = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.5, 1.2), fireplaceMaterial);
-    fireplaceTop.position.set(0, 3.25, -3);
-    fireplaceTop.castShadow = true;
-    scene.add(fireplaceTop);
+    // Corpo do gato
+    const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 0.4), catMaterial);
+    body.position.set(-2, 1, 2);
+    body.castShadow = true;
+    catGroup.add(body);
 
-    const fire = new THREE.Mesh(
-      new THREE.SphereGeometry(0.8, 32, 32),
-      new THREE.MeshStandardMaterial({ emissive: 0xff5500, emissiveIntensity: 1 })
-    );
-    fire.position.set(0, 1.5, -3.1);
-    scene.add(fire);
+    // Cabeça do gato
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), catMaterial);
+    head.position.set(-.95, 1.2, 2);
+    head.castShadow = true;
+    catGroup.add(head);
 
-    // Parede
-    const wallGeometry = new THREE.PlaneGeometry(20, 10);
-    const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a });
-    const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-    wall.position.set(0, 5, -5);
-    wall.receiveShadow = true;
-    scene.add(wall);
+    // Focinho do gato
+    const snout = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.3), catMaterial);
+    snout.position.set(-.65, 1.1, 2);
+    snout.castShadow = true;
+    catGroup.add(snout);
 
-    // Tapete
-    const rugGeometry = new THREE.PlaneGeometry(6, 4);
-    const rugMaterial = new THREE.MeshStandardMaterial({ color: 0xff6347 });
-    const rug = new THREE.Mesh(rugGeometry, rugMaterial);
-    rug.rotation.x = -Math.PI / 2;
-    rug.position.set(0, 0.01, -3.5); // Tapete em frente à lareira
-    scene.add(rug);
+    // Orelhas do gato
+    const rightEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
+    rightEar.position.set(-1.05, 1.45, 2.15);
+    rightEar.castShadow = true;
+    catGroup.add(rightEar);
 
-    // Sofá (objeto verde, colado à parede esquerda)
-    const sofaMaterial = new THREE.MeshStandardMaterial({ color: 0x4682b4 });
-    const sofaBase = new THREE.Mesh(new THREE.BoxGeometry(3, 1, 1.5), sofaMaterial);
-    sofaBase.position.set(-6.5, 1, -4); // Sofá colado à parede esquerda
-    sofaBase.rotation.y = Math.PI / 2; // Girado de frente para a parede
-    scene.add(sofaBase);
+    const leftEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
+    leftEar.position.set(-1.05, 1.45, 1.85);
+    leftEar.castShadow = true;
+    catGroup.add(leftEar);
 
-    const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(3, 1.5, 0.5), sofaMaterial);
-    sofaBack.position.set(-7, 1.75, -4); // Encosto do sofá alinhado
-    sofaBack.rotation.y = Math.PI / 2;
-    scene.add(sofaBack);
+    // Pernas do gato
+    const rightFrontLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
+    rightFrontLeg.position.set(-1.5, 0.5, 2.12);
+    rightFrontLeg.castShadow = true;
+    catGroup.add(rightFrontLeg);
+
+    const leftFrontLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
+    leftFrontLeg.position.set(-1.5, 0.5, 1.88);
+    leftFrontLeg.castShadow = true;
+    catGroup.add(leftFrontLeg);
+
+    const rightBackLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
+    rightBackLeg.position.set(-2.55, 0.5, 2.12);
+    rightBackLeg.castShadow = true;
+    catGroup.add(rightBackLeg);
+
+    const leftBackLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
+    leftBackLeg.position.set(-2.55, 0.5, 1.88);
+    leftBackLeg.castShadow = true;
+    catGroup.add(leftBackLeg);
+
+    // Cauda do gato
+    const tailBeggining = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.1), catMaterial);
+    tailBeggining.position.set(-3.1, 1.05, 2);
+    tailBeggining.rotation.z = 25 * Math.PI / 180;
+    tailBeggining.castShadow = true;
+    catGroup.add(tailBeggining);
+
+    const tailEnding = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.1), catMaterial);
+    tailEnding.position.set(-3.75, .88, 2);
+    tailEnding.castShadow = true;
+    catGroup.add(tailEnding);
+
+    const tailPoint = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.1), tailMaterial);
+    tailPoint.position.set(-4.125, .88, 2);
+    tailPoint.castShadow = true;
+    catGroup.add(tailPoint);
+
+    // Olho esquerdo
+    const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), eyeMaterial);
+    leftEye.position.set(-0.70, 1.25, 2.2);
+    catGroup.add(leftEye);
+
+    const leftPupil = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), pupilMaterial);
+    leftPupil.position.set(-0.70, 1.25, 2.1);
+    catGroup.add(leftPupil);
+
+    // Olho direito
+    const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), eyeMaterial);
+    rightEye.position.set(-0.70, 1.25, 1.8);
+    catGroup.add(rightEye);
+
+    const rightPupil = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), pupilMaterial);
+    rightPupil.position.set(-0.70, 1.25, 1.9);
+    catGroup.add(rightPupil);
+
+    // Nariz
+    const noseDown = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.1), noseMaterial);
+    noseDown.position.set(-0.60, 1.18, 2);
+    catGroup.add(noseDown);
+
+    const noseTop = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.1), noseMaterial);
+    noseTop.position.set(-0.625, 1.2, 2);
+    catGroup.add(noseTop);
+
+    // Adiciona o grupo do gato à cena
+    scene.add(catGroup);
 
     // Render loop
     function animate() {
       requestAnimationFrame(animate);
+      controls.update(); // Atualiza os controles para suavidade
       renderer.render(scene, camera);
     }
     animate();
