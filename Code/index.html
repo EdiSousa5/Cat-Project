@@ -58,29 +58,6 @@
     body.castShadow = true;
     catGroup.add(body);
 
-    // Cabeça do gato
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), catMaterial);
-    head.position.set(-.95, 1.2, 2);
-    head.castShadow = true;
-    catGroup.add(head);
-
-    // Focinho do gato
-    const snout = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.3), catMaterial);
-    snout.position.set(-.65, 1.1, 2);
-    snout.castShadow = true;
-    catGroup.add(snout);
-
-    // Orelhas do gato
-    const rightEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
-    rightEar.position.set(-1.05, 1.45, 2.15);
-    rightEar.castShadow = true;
-    catGroup.add(rightEar);
-
-    const leftEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
-    leftEar.position.set(-1.05, 1.45, 1.85);
-    leftEar.castShadow = true;
-    catGroup.add(leftEar);
-
     // Pernas do gato
     const rightFrontLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
     rightFrontLeg.position.set(-1.5, 0.5, 2.12);
@@ -102,57 +79,92 @@
     leftBackLeg.castShadow = true;
     catGroup.add(leftBackLeg);
 
+    // Cubo invisível que será o pai da cauda
+    const tailBase = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ visible: false }));
+    tailBase.position.set(-3.1, 1.05, 2); // Posição do cubo invisível
+    catGroup.add(tailBase);
+
     // Cauda do gato
     const tailBeggining = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.1), catMaterial);
-    tailBeggining.position.set(-3.1, 1.05, 2);
+    tailBeggining.position.set(0, 0, 0); // Ajusta para o cubo invisível
     tailBeggining.rotation.z = 25 * Math.PI / 180;
     tailBeggining.castShadow = true;
-    catGroup.add(tailBeggining);
+    tailBase.add(tailBeggining);
 
     const tailEnding = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.1), catMaterial);
-    tailEnding.position.set(-3.75, .88, 2);
+    tailEnding.position.set(-0.64, -.168, 0); // Ajusta para o cubo invisível
     tailEnding.castShadow = true;
-    catGroup.add(tailEnding);
+    tailBase.add(tailEnding);
 
     const tailPoint = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.1), tailMaterial);
-    tailPoint.position.set(-4.125, .88, 2);
+    tailPoint.position.set(-1.015, -.168, 0); // Ajusta para o cubo invisível
     tailPoint.castShadow = true;
-    catGroup.add(tailPoint);
+    tailBase.add(tailPoint);
 
-    // Olho esquerdo
+    // Cabeça do gato (agora é o "pai")
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), catMaterial);
+    head.position.set(-0.95, 1.2, 2);
+    head.castShadow = true;
+    catGroup.add(head);
+
+    // Focinho do gato (filho da cabeça)
+    const snout = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.3), catMaterial);
+    snout.position.set(.3, -.1, 0);  // Ajustando o focinho para ficar à frente da cabeça
+    snout.castShadow = true;
+    head.add(snout);
+
+    // Orelhas do gato (filhas da cabeça)
+    const rightEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
+    rightEar.position.set(0, .25, .15);  // Ajustando a orelha direita para ficar à frente e acima da cabeça
+    rightEar.castShadow = true;
+    head.add(rightEar);
+
+    const leftEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
+    leftEar.position.set(0, .25, -.15);  // Ajustando a orelha esquerda para ficar à frente e acima da cabeça
+    leftEar.castShadow = true;
+    head.add(leftEar);
+
+    // Olho esquerdo (filho da cabeça)
     const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), eyeMaterial);
-    leftEye.position.set(-0.70, 1.25, 2.2);
-    catGroup.add(leftEye);
+    leftEye.position.set(.25, .05, .2);  // Ajustando o olho esquerdo para ficar à frente da cabeça
+    head.add(leftEye);
 
     const leftPupil = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), pupilMaterial);
-    leftPupil.position.set(-0.70, 1.25, 2.1);
-    catGroup.add(leftPupil);
+    leftPupil.position.set(.25, .05, .1);  // Ajustando a pupila esquerda para a posição correta
+    head.add(leftPupil);
 
-    // Olho direito
+    // Olho direito (filho da cabeça)
     const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), eyeMaterial);
-    rightEye.position.set(-0.70, 1.25, 1.8);
-    catGroup.add(rightEye);
+    rightEye.position.set(.25, .05, -.2);  // Ajustando o olho direito para ficar à frente da cabeça
+    head.add(rightEye);
 
     const rightPupil = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), pupilMaterial);
-    rightPupil.position.set(-0.70, 1.25, 1.9);
-    catGroup.add(rightPupil);
+    rightPupil.position.set(.25, .05, -.1);  // Ajustando a pupila direita para a posição correta
+    head.add(rightPupil);
 
-    // Nariz
+    // Nariz (filho da cabeça)
     const noseDown = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.1), noseMaterial);
-    noseDown.position.set(-0.60, 1.18, 2);
-    catGroup.add(noseDown);
+    noseDown.position.set(.36, -.03, 0);  // Ajustando o nariz para ficar à frente e um pouco abaixo
+    head.add(noseDown);
 
     const noseTop = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.1), noseMaterial);
-    noseTop.position.set(-0.625, 1.2, 2);
-    catGroup.add(noseTop);
+    noseTop.position.set(.345, .01, 0);  // Ajustando o nariz superior para a posição correta
+    head.add(noseTop);
 
     // Adiciona o grupo do gato à cena
     scene.add(catGroup);
 
     // Render loop
+    let tailRotation = 0;
+
     function animate() {
       requestAnimationFrame(animate);
-      controls.update(); // Atualiza os controles para suavidade
+
+      // Animação da cauda
+      tailBase.rotation.y = Math.sin(tailRotation) * 0.05;
+      tailRotation += 0.03;
+
+      controls.update();
       renderer.render(scene, camera);
     }
     animate();
