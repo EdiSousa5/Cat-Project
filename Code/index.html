@@ -1,15 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cenário 3D</title>
   <style>
-    body { margin: 0; overflow: hidden; background-color: #ffffff; }
-    canvas { display: block; }
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    .controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+
+    .controls label {
+      margin-right: 5px;
+    }
+
+    .controls input {
+      margin-bottom: 10px;
+    }
   </style>
 </head>
+
 <body>
+  <div class="controls">
+    <label for="bodyColor">Cor do Corpo:</label>
+    <input type="color" id="bodyColor" value="#171617">
+    <br>
+    <label for="eyeColor">Cor dos Olhos:</label>
+    <input type="color" id="eyeColor" value="#FFFF00">
+    <br>
+    <label for="noseColor">Cor do Nariz:</label>
+    <input type="color" id="noseColor" value="#DA88A3">
+    <br>
+    <label for="tailTipColor">Cor da Ponta da Cauda:</label>
+    <input type="color" id="tailTipColor" value="#E4E4E4">
+    <br>
+    <button id="resetColors">Restaurar Cores Originais</button>
+    <button id="toggleWalk">Ativar Andar</button>
+
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script>
@@ -103,7 +150,7 @@
 
     // Cabeça do gato (agora é o "pai")
     const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), catMaterial);
-    head.position.set(-0.95, 1.2, 2);
+    head.position.set(-0.98, 1.2, 2);
     head.castShadow = true;
     catGroup.add(head);
 
@@ -154,19 +201,152 @@
     // Adiciona o grupo do gato à cena
     scene.add(catGroup);
 
-    // Render loop
+    // Alterar cores com base no seletor
+    document.getElementById('bodyColor').addEventListener('input', (event) => {
+      catMaterial.color.set(event.target.value);
+    });
+
+    // Alterar cor dos olhos e atualizar pupilas
+    document.getElementById('eyeColor').addEventListener('input', (event) => {
+      const eyeColor = event.target.value;
+      eyeMaterial.color.set(eyeColor);
+
+      // Calcula e aplica a cor mais escura nas pupilas
+      const darkerEyeColor = getDarkerColor(eyeColor, 0.5); // Reduz brilho pela metade
+      pupilMaterial.color.set(darkerEyeColor);
+    });
+
+    document.getElementById('noseColor').addEventListener('input', (event) => {
+      noseMaterial.color.set(event.target.value);
+    });
+
+    document.getElementById('tailTipColor').addEventListener('input', (event) => {
+      tailMaterial.color.set(event.target.value);
+    });
+
+    const originalColors = {
+      body: catMaterial.color.getHex(),
+      eyes: eyeMaterial.color.getHex(),
+      pupils: pupilMaterial.color.getHex(),
+      nose: noseMaterial.color.getHex(),
+      tailTip: tailMaterial.color.getHex(), // Adicionar cor original da ponta da cauda
+    };
+
+    document.getElementById('resetColors').addEventListener('click', () => {
+      catMaterial.color.set(originalColors.body);
+      eyeMaterial.color.set(originalColors.eyes);
+      pupilMaterial.color.set(originalColors.pupils);
+      noseMaterial.color.set(originalColors.nose);
+      tailMaterial.color.set(originalColors.tailTip); // Resetar cor da ponta da cauda
+
+      // Atualizar os valores dos inputs
+      document.getElementById('bodyColor').value = `#${originalColors.body.toString(16).padStart(6, '0')}`;
+      document.getElementById('eyeColor').value = `#${originalColors.eyes.toString(16).padStart(6, '0')}`;
+      document.getElementById('noseColor').value = `#${originalColors.nose.toString(16).padStart(6, '0')}`;
+      document.getElementById('tailTipColor').value = `#${originalColors.tailTip.toString(16).padStart(6, '0')}`;
+    });
+
+
+    // Função para calcular uma cor mais escura
+    function getDarkerColor(hexColor, factor = 0.5) {
+      const color = new THREE.Color(hexColor);
+      color.multiplyScalar(factor); // Escurece a cor multiplicando por um fator (menor que 1)
+      return color.getHex();
+    }
+
     let tailRotation = 0;
+    let isBlinking = false;
+    let blinkTime = 0;
+    let breathTime = 0;
+    let nextBlink = 500;
+    let holdClosedTime = 0;
+
+    let isWalking = false;
+    let walkTime = 0;
+
+    // Função para alternar o estado de caminhada
+    document.getElementById('toggleWalk').addEventListener('click', () => {
+      isWalking = !isWalking;
+      document.getElementById('toggleWalk').textContent = isWalking ? 'Parar de Andar' : 'Ativar Andar';
+    });
 
     function animate() {
       requestAnimationFrame(animate);
 
-      // Animação da cauda
+      // Breathing animation
+      const breathScale = 1 + 0.04 * Math.sin(breathTime);
+      body.scale.y = breathScale;
+      body.scale.x = 1 + (0.01 * Math.sin(breathTime));
+      body.scale.z = 1 + (0.025 * Math.sin(breathTime));
+      breathTime += 0.015;
+
+      // Tail animation
       tailBase.rotation.y = Math.sin(tailRotation) * 0.05;
-      tailRotation += 0.03;
+      tailRotation += 0.05;
+
+      // Blinking animation
+      blinkTime += 2;
+
+      if (!isBlinking && blinkTime >= nextBlink) {
+        isBlinking = true;
+        blinkTime = 0;
+        holdClosedTime = 0;
+      }
+
+      if (isBlinking) {
+        const blinkPhase = blinkTime * 0.03;
+
+        if (blinkPhase < Math.PI / 2) {
+          // Closing phase
+          const blinkScale = Math.max(0, Math.cos(blinkPhase));
+          leftEye.scale.y = blinkScale;
+          rightEye.scale.y = blinkScale;
+          leftPupil.scale.y = blinkScale;
+          rightPupil.scale.y = blinkScale;
+
+          if (blinkScale <= 0) {
+            holdClosedTime++;
+            if (holdClosedTime >= 20) {
+              blinkTime = Math.PI / 2;
+            }
+          }
+        } else {
+          // Opening phase - using same cosine animation
+          const blinkScale = Math.max(0, Math.cos(Math.PI - blinkPhase));
+          leftEye.scale.y = blinkScale;
+          rightEye.scale.y = blinkScale;
+          leftPupil.scale.y = blinkScale;
+          rightPupil.scale.y = blinkScale;
+
+          if (blinkPhase >= Math.PI) {
+            isBlinking = false;
+            leftEye.scale.y = 1;
+            rightEye.scale.y = 1;
+            leftPupil.scale.y = 1;
+            rightPupil.scale.y = 1;
+            blinkTime = 0;
+            nextBlink = 500;
+          }
+        }
+
+      }
+
+      if (isWalking) {
+        walkTime += 0.1;
+        const legRotation = Math.sin(walkTime) * 0.5;
+        rightFrontLeg.rotation.z = legRotation;
+        leftBackLeg.rotation.z = -legRotation;
+        leftFrontLeg.rotation.z = -legRotation;
+        rightBackLeg.rotation.z = legRotation;
+
+        // Movimento do corpo para frente e para trás
+        body.position.y += 0.001 * Math.cos(walkTime);
+      }
 
       controls.update();
       renderer.render(scene, camera);
     }
+
     animate();
 
     // Ajustar tela
@@ -177,4 +357,5 @@
     });
   </script>
 </body>
+
 </html>
