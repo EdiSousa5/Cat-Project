@@ -1,82 +1,584 @@
-import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.min.js';
+// ============= SCENE SETUP & CONSTANTS =============
 
-// Cena e renderizador
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x2a2a2a); // Fundo escuro
+scene.background = new THREE.Color(0x00CED1);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
-// Câmera
+// ============= CAMERA & CONTROLS =============
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(1, 2, 10); // Movida mais para trás para um campo de visão mais amplo
-camera.lookAt(-3, 1.5, -3); // Olhando para a cena de forma ampla
+camera.position.set(5, 6, 5); // Posição inicial da câmera
 
-// Luz ambiente
-const ambientLight = new THREE.AmbientLight(0xffd6a5, 0.7); // Luz quente
+const controls = new THREE.OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0, 0); // Foco no gato
+controls.enableDamping = true; // Movimento suave
+controls.dampingFactor = 0.1;
+controls.maxPolarAngle = Math.PI / 2; // Restringir movimento abaixo do chão (opcional)
+controls.enabled = false; // Desabilitar controles no início (seguindo o gato)
+
+let cameraFollowing = true; // Estado inicial da câmera
+let cameraOffset = new THREE.Vector3(12, 10, 2); // Offset da câmera em relação ao gato
+
+// Botão de alternância
+const cameraButton = document.getElementById('toggleCamera');
+cameraButton.textContent = 'Camera: Following Cat';
+cameraButton.classList.add('following');
+
+// Evento de alternância da câmera
+cameraButton.addEventListener('click', () => {
+  cameraFollowing = !cameraFollowing;
+
+  if (cameraFollowing) {
+    // Configurar para seguir o gato
+    cameraButton.textContent = 'Camera: Following Cat';
+    cameraButton.classList.remove('manual');
+    cameraButton.classList.add('following');
+    controls.enabled = false; // Desativar controles manuais
+  } else {
+    // Configurar para controle manual
+    cameraButton.textContent = 'Camera: Manual Control';
+    cameraButton.classList.remove('following');
+    cameraButton.classList.add('manual');
+    controls.enabled = true; // Ativar controles manuais
+  }
+});
+
+// Função para atualizar a posição da câmera
+function updateCamera() {
+  if (cameraFollowing) {
+    const targetPosition = new THREE.Vector3();
+    catGroup.getWorldPosition(targetPosition); // Obter posição do gato
+
+    const idealPosition = targetPosition.clone().add(cameraOffset); // Calcular posição desejada
+    camera.position.lerp(idealPosition, 0.1); // Movimentar suavemente a câmera
+    camera.lookAt(targetPosition); // Olhar para o gato
+  } else {
+    // Atualizar controles manuais somente se habilitados
+    if (controls.enabled) {
+      controls.update();
+    }
+  }
+}
+
+// ============= LIGHTING =============
+const ambientLight = new THREE.AmbientLight(0xffd6a5, .8);
 scene.add(ambientLight);
 
-// Luz direcional simulando a iluminação do fogo
-const fireLight = new THREE.PointLight(0xff5500, 1.5, 15);
-fireLight.position.set(-2, 1.5, -3.1); // Luz movida para dentro da fogueira (em frente à esfera)
-fireLight.castShadow = true;
-scene.add(fireLight);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+directionalLight.position.set(25, 15, 10); // Luz vindo de cima
+directionalLight.castShadow = true;
+scene.add(directionalLight);
 
-// Chão
-const floorGeometry = new THREE.PlaneGeometry(20, 20);
-const floorMaterial = new THREE.MeshStandardMaterial({ color: 0x8b5a2b });
+// ============= CAT CREATION & MATERIALS =============
+const catMaterial = new THREE.MeshStandardMaterial({ color: 0x171617 }); // Cor preta
+const tailMaterial = new THREE.MeshStandardMaterial({ color: 0xE4E4E4 }); // Cor branco escuro
+const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00 }); // Cor amarela
+const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0xC26412 }); // Cor laranja escuro
+const noseMaterial = new THREE.MeshStandardMaterial({ color: 0xDA88A3 }); // Cor laranja escuro
+
+const catGroup = new THREE.Group();
+
+// ============= CAT BODY =============
+
+const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.5, 0.4), catMaterial);
+body.position.set(0, 0, 0);
+body.castShadow = true;
+catGroup.add(body);
+
+// ============= CAT LEGS =============
+
+// Pernas do gato
+const rightFrontLeg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), catMaterial);
+rightFrontLeg.position.set(0.55, -0.44, 0.12); // Ajuste a posição relativa ao corpo
+rightFrontLeg.castShadow = true;
+body.add(rightFrontLeg);
+
+const leftFrontLeg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), catMaterial);
+leftFrontLeg.position.set(0.55, -0.44, -0.12); // Ajuste a posição relativa ao corpo
+leftFrontLeg.castShadow = true;
+body.add(leftFrontLeg);
+
+const rightBackLeg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), catMaterial);
+rightBackLeg.position.set(-0.55, -0.44, 0.12); // Ajuste a posição relativa ao corpo
+rightBackLeg.castShadow = true;
+body.add(rightBackLeg);
+
+const leftBackLeg = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.6, 0.15), catMaterial);
+leftBackLeg.position.set(-0.55, -0.44, -0.12); // Ajuste a posição relativa ao corpo
+leftBackLeg.castShadow = true;
+body.add(leftBackLeg);
+
+// ============= CAT HEAD =============
+
+// Cabeça do gato (agora é o "pai")
+const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), catMaterial);
+head.position.set(1, 0.2, 0); // Ajuste a posição relativa ao corpo
+head.castShadow = true;
+body.add(head);
+
+// Focinho do gato (filho da cabeça)
+const snout = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.3), catMaterial);
+snout.position.set(.3, -.1, 0);  // Ajustando o focinho para ficar à frente da cabeça
+snout.castShadow = true;
+head.add(snout);
+
+// Orelhas do gato (filhas da cabeça)
+const rightEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
+rightEar.position.set(0, .25, .15);  // Ajustando a orelha direita para ficar à frente e acima da cabeça
+rightEar.castShadow = true;
+head.add(rightEar);
+
+const leftEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
+leftEar.position.set(0, .25, -.15);  // Ajustando a orelha esquerda para ficar à frente e acima da cabeça
+leftEar.castShadow = true;
+head.add(leftEar);
+
+// ============= CAT EYES =============
+
+// Olho esquerdo (filho da cabeça)
+const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), eyeMaterial);
+leftEye.position.set(.25, .05, .2);  // Ajustando o olho esquerdo para ficar à frente da cabeça
+head.add(leftEye);
+
+const leftPupil = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), pupilMaterial);
+leftPupil.position.set(.25, .05, .1);  // Ajustando a pupila esquerda para a posição correta
+head.add(leftPupil);
+
+// Olho direito (filho da cabeça)
+const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), eyeMaterial);
+rightEye.position.set(.25, .05, -.2);  // Ajustando o olho direito para ficar à frente da cabeça
+head.add(rightEye);
+
+const rightPupil = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), pupilMaterial);
+rightPupil.position.set(.25, .05, -.1);  // Ajustando a pupila direita para a posição correta
+head.add(rightPupil);
+
+// ============= CAT NOSE =============
+
+const topNose = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.04, 0.08), noseMaterial);
+topNose.position.set(0.35, 0, 0);
+topNose.castShadow = true;
+head.add(topNose);
+
+// ============= CAT TAIL =============
+
+// Cubo invisível que será o pai da cauda
+const tailBase = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ visible: false }));
+tailBase.position.set(-1, 0.02, 0); // Ajuste a posição relativa ao corpo
+body.add(tailBase);
+
+// Início Cauda do gato
+const tailBeggining = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.1), catMaterial);
+tailBeggining.position.set(0, 0, 0); // Ajusta para o cubo invisível
+tailBeggining.rotation.z = 25 * Math.PI / 180;
+tailBeggining.castShadow = true;
+tailBase.add(tailBeggining);
+
+// Fim Cauda do gato
+const tailEnding = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.1), catMaterial);
+tailEnding.position.set(-0.64, -.168, 0); // Ajusta para o cubo invisível
+tailEnding.castShadow = true;
+tailBase.add(tailEnding);
+
+// Ponta Cauda do gato
+const tailPoint = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.1), tailMaterial);
+tailPoint.position.set(-1.015, -.168, 0); // Ajusta para o cubo invisível
+tailPoint.castShadow = true;
+tailBase.add(tailPoint);
+
+// ============= FLOOR CREATION =============
+
+const floorGeometry = new THREE.PlaneGeometry(10, 10);
+const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFFFF });
 const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+floor.position.set(0, -0.7, 0);
 floor.rotation.x = -Math.PI / 2;
 floor.receiveShadow = true;
 scene.add(floor);
 
-// Lareira - movida para a esquerda
-const fireplaceMaterial = new THREE.MeshStandardMaterial({ color: 0x555555 });
-const fireplaceBase = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 1), fireplaceMaterial);
-fireplaceBase.position.set(-2, 1.5, -3); // Movida para a esquerda
-fireplaceBase.castShadow = true;
-scene.add(fireplaceBase);
+// ============= ADD CAT TO SCENE =============
 
-const fireplaceTop = new THREE.Mesh(new THREE.BoxGeometry(4.5, 0.5, 1.2), fireplaceMaterial);
-fireplaceTop.position.set(-2, 3.25, -3);
-fireplaceTop.castShadow = true;
-scene.add(fireplaceTop);
-
-const fire = new THREE.Mesh(
-  new THREE.SphereGeometry(0.8, 32, 32),
-  new THREE.MeshStandardMaterial({ emissive: 0xff5500, emissiveIntensity: 1 })
-);
-fire.position.set(-2, 1.5, -3.1);
-scene.add(fire);
-
-// Parede
-const wallGeometry = new THREE.PlaneGeometry(20, 10);
-const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x2a2a2a });
-const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-wall.position.set(0, 5, -5);
-wall.receiveShadow = true;
-scene.add(wall);
-
-// Tapete - Aumentado e posicionado à frente da lareira
-const rugGeometry = new THREE.PlaneGeometry(8, 16); // Tamanho maior
-const rugMaterial = new THREE.MeshStandardMaterial({ color: 0xff6347 });
-const rug = new THREE.Mesh(rugGeometry, rugMaterial);
-rug.rotation.x = -Math.PI / 2;
-rug.position.set(0, 0, 0); // Colocado à frente da lareira, ajustado para não ficar por baixo
-scene.add(rug);
+scene.add(catGroup);
 
 
-// Render loop
+
+
+
+// ============= FPS =============
+
+// Configuração do Canvas para o gráfico de FPS
+const fpsCanvas = document.getElementById('fpsChart');
+const fpsCtx = fpsCanvas.getContext('2d');
+const fpsData = [];
+const maxFrames = 50;
+
+// Desenha o gráfico
+function drawFpsChart() {
+  fpsCtx.clearRect(0, 0, fpsCanvas.width, fpsCanvas.height);
+
+  // Definir estilo do gráfico
+  fpsCtx.strokeStyle = 'blue';
+  fpsCtx.lineWidth = 2;
+
+  // Desenhar os dados de FPS
+  fpsCtx.beginPath();
+  fpsData.forEach((fps, index) => {
+    const x = (index / maxFrames) * fpsCanvas.width;
+    const y = fpsCanvas.height - (fps / 100) * fpsCanvas.height;
+    fpsCtx.lineTo(x, y);
+  });
+  fpsCtx.stroke();
+}
+
+// Atualizar dados de FPS
+function updateFpsChart(fps) {
+  fpsData.push(fps);
+  if (fpsData.length > maxFrames) fpsData.shift(); // Limitar dados ao máximo de frames
+  drawFpsChart();
+}
+
+let lastFrameTime = performance.now(); // Inicialização de lastFrameTime
+
+// ============= FLOOR CLICK =============
+
+window.addEventListener('click', onFloorClick);
+
+// Modify the onFloorClick function
+function onFloorClick(event) {
+  if (isCustomizing) return;
+
+  const mouse = new THREE.Vector2();
+  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+  const raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(mouse, camera);
+
+  const intersects = raycaster.intersectObject(floor);
+  if (intersects.length > 0) {
+    targetPosition = intersects[0].point;
+    isMoving = true;
+    isRotating = true;
+
+    // Calculate target rotation with 90 degree offset
+    const direction = new THREE.Vector2(
+      targetPosition.x - catGroup.position.x,
+      targetPosition.z - catGroup.position.z
+    );
+    targetRotation.y = Math.atan2(direction.x, direction.y) - Math.PI / 2;
+  }
+}
+
+// ============= ANIMATION VARIABLES =============
+
+let tailRotation = 0;
+let isBlinking = false;
+let blinkTime = 0;
+let nextBlink = 500;
+let holdClosedTime = 0;
+let isWalking = false;
+let walkTime = 0;
+
+let targetPosition = null;
+let isMoving = false;
+const moveSpeed = 0.04;
+let isRotating = false;
+const rotationSpeed = 0.07;
+const targetRotation = new THREE.Euler();
+
+// ============= ANIMATE FUNCTIONS =============
+
+function updateTail() {
+  tailBase.rotation.y = Math.sin(tailRotation) * 0.1;
+  tailRotation += 0.07;
+}
+
+function updateBlinking() {
+  blinkTime += 2;
+
+  if (!isBlinking && blinkTime >= nextBlink) {
+    isBlinking = true;
+    blinkTime = 0;
+    holdClosedTime = 0;
+  }
+
+  if (isBlinking) {
+    const blinkPhase = blinkTime * 0.03;
+
+    if (blinkPhase < Math.PI / 2) {
+      // Closing phase
+      const blinkScale = Math.max(0, Math.cos(blinkPhase));
+      leftEye.scale.y = blinkScale;
+      rightEye.scale.y = blinkScale;
+      leftPupil.scale.y = blinkScale;
+      rightPupil.scale.y = blinkScale;
+
+      if (blinkScale <= 0) {
+        holdClosedTime++;
+        if (holdClosedTime >= 20) {
+          blinkTime = Math.PI / 2;
+        }
+      }
+    } else {
+      // Opening phase
+      const blinkScale = Math.max(0, Math.cos(Math.PI - blinkPhase));
+      leftEye.scale.y = blinkScale;
+      rightEye.scale.y = blinkScale;
+      leftPupil.scale.y = blinkScale;
+      rightPupil.scale.y = blinkScale;
+
+      if (blinkPhase >= Math.PI) {
+        isBlinking = false;
+        leftEye.scale.y = 1;
+        rightEye.scale.y = 1;
+        leftPupil.scale.y = 1;
+        rightPupil.scale.y = 1;
+        blinkTime = 0;
+        nextBlink = 500;
+      }
+    }
+  }
+}
+
+function updateWalking() {
+  if (!isWalking) return;
+
+  walkTime += 0.2;
+  const legRotation = Math.sin(walkTime) * 0.5;
+  rightFrontLeg.rotation.z = legRotation;
+  leftBackLeg.rotation.z = legRotation;
+  leftFrontLeg.rotation.z = -legRotation;
+  rightBackLeg.rotation.z = -legRotation;
+
+  body.position.y += 0.0006 * Math.cos(walkTime);
+}
+
+function updateMovement() {
+  if (!isMoving || !targetPosition) return;
+
+  if (isRotating) {
+    const currentRotation = catGroup.rotation.y;
+    const rotationDiff = targetRotation.y - currentRotation;
+    const normalizedDiff = ((rotationDiff + Math.PI) % (Math.PI * 2)) - Math.PI;
+
+    if (Math.abs(normalizedDiff) > 0.05) {
+      catGroup.rotation.y += Math.sign(normalizedDiff) * rotationSpeed;
+    } else {
+      isRotating = false;
+      isWalking = true;
+    }
+  } else {
+    const distance = new THREE.Vector2(
+      targetPosition.x - catGroup.position.x,
+      targetPosition.z - catGroup.position.z
+    ).length();
+
+    if (distance > 0.1) {
+      const direction = new THREE.Vector2(
+        targetPosition.x - catGroup.position.x,
+        targetPosition.z - catGroup.position.z
+      ).normalize();
+
+      catGroup.position.x += direction.x * moveSpeed;
+      catGroup.position.z += direction.y * moveSpeed;
+    } else {
+      isMoving = false;
+      isWalking = false;
+      targetPosition = null;
+
+      rightFrontLeg.rotation.z = 0;
+      leftBackLeg.rotation.z = 0;
+      leftFrontLeg.rotation.z = 0;
+      rightBackLeg.rotation.z = 0;
+    }
+  }
+}
+
+function updateFPS() {
+  const now = performance.now();
+  const fps = 1000 / (now - lastFrameTime);
+  lastFrameTime = now;
+
+  updateFpsChart(fps);
+  document.getElementById('fpsValue').textContent = Math.round(fps);
+}
+
+// Main animation loop
 function animate() {
   requestAnimationFrame(animate);
+
+  updateTail();
+  updateBlinking();
+  updateWalking();
+  updateMovement();
+  updateCamera();  // Add camera update
+
+  controls.update();
   renderer.render(scene, camera);
+
+  updateFPS();
 }
+
 animate();
 
-// Ajustar tela
+// ============= WINDOWS REZISE =============
+
 window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
 });
+
+let isCustomizing = false;
+
+// Add to existing code
+const mainControls = document.getElementById('mainControls');
+const customizeButton = document.getElementById('customizeButton');
+const customizeMenu = document.getElementById('customizeMenu');
+const closeCustomizeButton = document.getElementById('closeCustomize');
+
+// Store original camera position
+const originalCameraPosition = new THREE.Vector3();
+const customizeCameraPosition = new THREE.Vector3(2, 0.5, 0);
+
+// Update customize button click handler
+
+
+// ============= MENU - CHANCHE COLORS =============
+
+const originalColors = {
+  body: catMaterial.color.getHex(),
+  eyes: eyeMaterial.color.getHex(),
+  pupils: pupilMaterial.color.getHex(),
+  nose: noseMaterial.color.getHex(),
+  tailTip: tailMaterial.color.getHex(), // Adicionar cor original da ponta da cauda
+};
+
+document.getElementById('bodyColor').addEventListener('input', (event) => {
+  catMaterial.color.set(event.target.value);
+});
+
+// Alterar cor dos olhos e atualizar pupilas
+document.getElementById('eyeColor').addEventListener('input', (event) => {
+  const eyeColor = event.target.value;
+  eyeMaterial.color.set(eyeColor);
+
+  // Calcula e aplica a cor mais escura nas pupilas
+  const darkerEyeColor = getDarkerColor(eyeColor, 0.5); // Reduz brilho pela metade
+  pupilMaterial.color.set(darkerEyeColor);
+});
+
+document.getElementById('noseColor').addEventListener('input', (event) => {
+  noseMaterial.color.set(event.target.value);
+});
+
+document.getElementById('tailTipColor').addEventListener('input', (event) => {
+  tailMaterial.color.set(event.target.value);
+});
+
+document.getElementById('resetColors').addEventListener('click', () => {
+  catMaterial.color.set(originalColors.body);
+  eyeMaterial.color.set(originalColors.eyes);
+  pupilMaterial.color.set(originalColors.pupils);
+  noseMaterial.color.set(originalColors.nose);
+  tailMaterial.color.set(originalColors.tailTip); // Resetar cor da ponta da cauda
+
+  // Atualizar os valores dos inputs
+  document.getElementById('bodyColor').value = `#${originalColors.body.toString(16).padStart(6, '0')}`;
+  document.getElementById('eyeColor').value = `#${originalColors.eyes.toString(16).padStart(6, '0')}`;
+  document.getElementById('noseColor').value = `#${originalColors.nose.toString(16).padStart(6, '0')}`;
+  document.getElementById('tailTipColor').value = `#${originalColors.tailTip.toString(16).padStart(6, '0')}`;
+});
+
+// Função para calcular uma cor mais escura
+function getDarkerColor(hexColor, factor = 0.5) {
+  const color = new THREE.Color(hexColor);
+  color.multiplyScalar(factor); // Escurece a cor multiplicando por um fator (menor que 1)
+  return color.getHex();
+}
+
+
+// ============= COSTUMIZE MENU =============
+
+
+customizeButton.addEventListener('click', () => {
+  isCustomizing = true;
+  mainControls.style.display = 'none';
+  customizeMenu.style.display = 'block';
+
+  const catPosition = new THREE.Vector3();
+  catGroup.getWorldPosition(catPosition);
+  camera.position.set(catPosition.x + 4, catPosition.y + 1, catPosition.z);
+  camera.lookAt(catPosition);
+
+  isMoving = false;
+  isWalking = false;
+  isRotating = false;
+  cameraFollowing = false;
+  controls.enabled = false;
+});
+
+closeCustomizeButton.addEventListener('click', () => {
+  isCustomizing = false;
+  mainControls.style.display = 'block';
+  customizeMenu.style.display = 'none';
+
+  camera.position.copy(originalCameraPosition);
+  cameraFollowing = true;
+});
+
+// Add size control event listeners
+document.getElementById('bodySize').addEventListener('input', (event) => {
+  const scale = parseFloat(event.target.value);
+  body.scale.set(scale, scale, scale);
+  updateCatHeight();
+});
+
+document.getElementById('headSize').addEventListener('input', (event) => {
+  const scale = parseFloat(event.target.value);
+  head.scale.set(scale, scale, scale);
+});
+
+document.getElementById('tailSize').addEventListener('input', (event) => {
+  const scale = parseFloat(event.target.value);
+  tailBase.scale.set(scale, scale, scale);
+});
+
+document.getElementById('legsSize').addEventListener('input', (event) => {
+  const scale = parseFloat(event.target.value);
+  rightFrontLeg.scale.set(scale, scale, scale);
+  leftFrontLeg.scale.set(scale, scale, scale);
+  rightBackLeg.scale.set(scale, scale, scale);
+  leftBackLeg.scale.set(scale, scale, scale);
+  updateCatHeight();
+});
+
+document.getElementById('resetSize').addEventListener('click', () => {
+  const inputs = ['bodySize', 'headSize', 'tailSize', 'legsSize'];
+  inputs.forEach(id => {
+    document.getElementById(id).value = 1;
+    const element = id === 'bodySize' ? body : id === 'headSize' ? head : id === 'tailSize' ? tailBase : null;
+
+    if (element) {
+      element.scale.set(1, 1, 1);
+    } else if (id === 'legsSize') {
+      [rightFrontLeg, leftFrontLeg, rightBackLeg, leftBackLeg].forEach(leg => {
+        leg.scale.set(1, 1, 1);
+      });
+    }
+  });
+  updateCatHeight();
+});
+
+function updateCatHeight() {
+  const bodyScale = parseFloat(document.getElementById('bodySize').value);
+  const legsScale = parseFloat(document.getElementById('legsSize').value);
+
+  const baseHeight = 0.7; // Original height from floor
+  const bodyOffset = (bodyScale - 1) * 0.4; // Body contribution
+  const legsOffset = (legsScale - 1) * 0.6; // Legs contribution
+
+  catGroup.position.y = baseHeight + Math.max(0, bodyOffset + legsOffset);
+}

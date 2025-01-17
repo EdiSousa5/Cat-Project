@@ -5,357 +5,65 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cenário 3D</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background-color: #ffffff;
-    }
-
-    canvas {
-      display: block;
-    }
-
-    .controls {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 10px;
-      border-radius: 5px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-      font-family: Arial, sans-serif;
-      font-size: 14px;
-    }
-
-    .controls label {
-      margin-right: 5px;
-    }
-
-    .controls input {
-      margin-bottom: 10px;
-    }
-  </style>
+  <link rel="stylesheet" href="./style.css">
 </head>
 
 <body>
   <div class="controls">
-    <label for="bodyColor">Cor do Corpo:</label>
-    <input type="color" id="bodyColor" value="#171617">
-    <br>
-    <label for="eyeColor">Cor dos Olhos:</label>
-    <input type="color" id="eyeColor" value="#FFFF00">
-    <br>
-    <label for="noseColor">Cor do Nariz:</label>
-    <input type="color" id="noseColor" value="#DA88A3">
-    <br>
-    <label for="tailTipColor">Cor da Ponta da Cauda:</label>
-    <input type="color" id="tailTipColor" value="#E4E4E4">
-    <br>
-    <button id="resetColors">Restaurar Cores Originais</button>
-    <button id="toggleWalk">Ativar Andar</button>
+    <div id="mainControls">
+      <h3>Menu</h3>
+      <button id="toggleCamera">Camera: Following Cat</button>
+      <button id="customizeButton">Customize Cat</button>
+    </div>
 
+    <div id="customizeMenu">
+      <h3>Colors</h3>
+      <div class="colorControls">
+        <label for="bodyColor">Body Color:</label>
+        <input type="color" id="bodyColor" value="#171617">
+
+        <label for="eyeColor">Eye Color:</label>
+        <input type="color" id="eyeColor" value="#FFFF00">
+
+        <label for="noseColor">Nose Color:</label>
+        <input type="color" id="noseColor" value="#DA88A3">
+
+        <label for="tailTipColor">Tail Tip Color:</label>
+        <input type="color" id="tailTipColor" value="#E4E4E4">
+      </div>
+
+      <h3>Size</h3>
+      <div class="sizeControls">
+        <label for="bodySize">Body Size:</label>
+        <input type="range" id="bodySize" min="0.5" max="2" step="0.1" value="1">
+
+        <label for="headSize">Head Size:</label>
+        <input type="range" id="headSize" min="0.5" max="2" step="0.1" value="1">
+
+        <label for="tailSize">Tail Size:</label>
+        <input type="range" id="tailSize" min="0.5" max="2" step="0.1" value="1">
+
+        <label for="legsSize">Legs Size:</label>
+        <input type="range" id="legsSize" min="0.5" max="2" step="0.1" value="1">
+      </div>
+
+      <button id="resetColors">Reset Colors</button>
+      <button id="resetSize">Reset Size</button>
+      <button id="closeCustomize">Close</button>
+    </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script>
-    // Cena e renderizador
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x00CED1);
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    document.body.appendChild(renderer.domElement);
+  <div id="fpsDisplay">
+    FPS: <span id="fpsValue">0</span>
+  </div>
 
-    // Câmera
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(5, 3, 5); // Posição inicial da câmera
+  <canvas id="fpsChart"></canvas>
+</body>
 
-    // OrbitControls para movimentar a câmera
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.target.set(-2, 1, 2); // Foco no gato
-    controls.enableDamping = true; // Movimento suave
-    controls.dampingFactor = 0.1;
-    controls.maxPolarAngle = Math.PI / 2; // Restringir movimento abaixo do chão (opcional)
-
-    // Luz ambiente
-    const ambientLight = new THREE.AmbientLight(0xffd6a5, 1);
-    scene.add(ambientLight);
-
-    // Luz direcional (de cima)
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(0, 10, 0); // Luz vindo de cima
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
-
-    // Gato (material preto)
-    const catMaterial = new THREE.MeshStandardMaterial({ color: 0x171617 }); // Cor preta
-    const tailMaterial = new THREE.MeshStandardMaterial({ color: 0xE4E4E4 }); // Cor branco escuro
-    const eyeMaterial = new THREE.MeshStandardMaterial({ color: 0xFFFF00 }); // Cor amarela
-    const pupilMaterial = new THREE.MeshStandardMaterial({ color: 0xC26412 }); // Cor laranja escuro
-    const noseMaterial = new THREE.MeshStandardMaterial({ color: 0xDA88A3 }); // Cor laranja escuro
-
-    // Criar o grupo para o gato
-    const catGroup = new THREE.Group();
-
-    // Corpo do gato
-    const body = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.6, 0.4), catMaterial);
-    body.position.set(-2, 1, 2);
-    body.castShadow = true;
-    catGroup.add(body);
-
-    // Pernas do gato
-    const rightFrontLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
-    rightFrontLeg.position.set(-1.5, 0.5, 2.12);
-    rightFrontLeg.castShadow = true;
-    catGroup.add(rightFrontLeg);
-
-    const leftFrontLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
-    leftFrontLeg.position.set(-1.5, 0.5, 1.88);
-    leftFrontLeg.castShadow = true;
-    catGroup.add(leftFrontLeg);
-
-    const rightBackLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
-    rightBackLeg.position.set(-2.55, 0.5, 2.12);
-    rightBackLeg.castShadow = true;
-    catGroup.add(rightBackLeg);
-
-    const leftBackLeg = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.5, 0.2), catMaterial);
-    leftBackLeg.position.set(-2.55, 0.5, 1.88);
-    leftBackLeg.castShadow = true;
-    catGroup.add(leftBackLeg);
-
-    // Cubo invisível que será o pai da cauda
-    const tailBase = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.1, 0.1), new THREE.MeshBasicMaterial({ visible: false }));
-    tailBase.position.set(-3.1, 1.05, 2); // Posição do cubo invisível
-    catGroup.add(tailBase);
-
-    // Cauda do gato
-    const tailBeggining = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.1, 0.1), catMaterial);
-    tailBeggining.position.set(0, 0, 0); // Ajusta para o cubo invisível
-    tailBeggining.rotation.z = 25 * Math.PI / 180;
-    tailBeggining.castShadow = true;
-    tailBase.add(tailBeggining);
-
-    const tailEnding = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 0.1), catMaterial);
-    tailEnding.position.set(-0.64, -.168, 0); // Ajusta para o cubo invisível
-    tailEnding.castShadow = true;
-    tailBase.add(tailEnding);
-
-    const tailPoint = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.1, 0.1), tailMaterial);
-    tailPoint.position.set(-1.015, -.168, 0); // Ajusta para o cubo invisível
-    tailPoint.castShadow = true;
-    tailBase.add(tailPoint);
-
-    // Cabeça do gato (agora é o "pai")
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 0.5), catMaterial);
-    head.position.set(-0.98, 1.2, 2);
-    head.castShadow = true;
-    catGroup.add(head);
-
-    // Focinho do gato (filho da cabeça)
-    const snout = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.2, 0.3), catMaterial);
-    snout.position.set(.3, -.1, 0);  // Ajustando o focinho para ficar à frente da cabeça
-    snout.castShadow = true;
-    head.add(snout);
-
-    // Orelhas do gato (filhas da cabeça)
-    const rightEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
-    rightEar.position.set(0, .25, .15);  // Ajustando a orelha direita para ficar à frente e acima da cabeça
-    rightEar.castShadow = true;
-    head.add(rightEar);
-
-    const leftEar = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.1, 0.1), catMaterial);
-    leftEar.position.set(0, .25, -.15);  // Ajustando a orelha esquerda para ficar à frente e acima da cabeça
-    leftEar.castShadow = true;
-    head.add(leftEar);
-
-    // Olho esquerdo (filho da cabeça)
-    const leftEye = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), eyeMaterial);
-    leftEye.position.set(.25, .05, .2);  // Ajustando o olho esquerdo para ficar à frente da cabeça
-    head.add(leftEye);
-
-    const leftPupil = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), pupilMaterial);
-    leftPupil.position.set(.25, .05, .1);  // Ajustando a pupila esquerda para a posição correta
-    head.add(leftPupil);
-
-    // Olho direito (filho da cabeça)
-    const rightEye = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), eyeMaterial);
-    rightEye.position.set(.25, .05, -.2);  // Ajustando o olho direito para ficar à frente da cabeça
-    head.add(rightEye);
-
-    const rightPupil = new THREE.Mesh(new THREE.BoxGeometry(0.001, 0.1, 0.1), pupilMaterial);
-    rightPupil.position.set(.25, .05, -.1);  // Ajustando a pupila direita para a posição correta
-    head.add(rightPupil);
-
-    // Nariz (filho da cabeça)
-    const noseDown = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.06, 0.1), noseMaterial);
-    noseDown.position.set(.36, -.03, 0);  // Ajustando o nariz para ficar à frente e um pouco abaixo
-    head.add(noseDown);
-
-    const noseTop = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.02, 0.1), noseMaterial);
-    noseTop.position.set(.345, .01, 0);  // Ajustando o nariz superior para a posição correta
-    head.add(noseTop);
-
-    // Adiciona o grupo do gato à cena
-    scene.add(catGroup);
-
-    // Alterar cores com base no seletor
-    document.getElementById('bodyColor').addEventListener('input', (event) => {
-      catMaterial.color.set(event.target.value);
-    });
-
-    // Alterar cor dos olhos e atualizar pupilas
-    document.getElementById('eyeColor').addEventListener('input', (event) => {
-      const eyeColor = event.target.value;
-      eyeMaterial.color.set(eyeColor);
-
-      // Calcula e aplica a cor mais escura nas pupilas
-      const darkerEyeColor = getDarkerColor(eyeColor, 0.5); // Reduz brilho pela metade
-      pupilMaterial.color.set(darkerEyeColor);
-    });
-
-    document.getElementById('noseColor').addEventListener('input', (event) => {
-      noseMaterial.color.set(event.target.value);
-    });
-
-    document.getElementById('tailTipColor').addEventListener('input', (event) => {
-      tailMaterial.color.set(event.target.value);
-    });
-
-    const originalColors = {
-      body: catMaterial.color.getHex(),
-      eyes: eyeMaterial.color.getHex(),
-      pupils: pupilMaterial.color.getHex(),
-      nose: noseMaterial.color.getHex(),
-      tailTip: tailMaterial.color.getHex(), // Adicionar cor original da ponta da cauda
-    };
-
-    document.getElementById('resetColors').addEventListener('click', () => {
-      catMaterial.color.set(originalColors.body);
-      eyeMaterial.color.set(originalColors.eyes);
-      pupilMaterial.color.set(originalColors.pupils);
-      noseMaterial.color.set(originalColors.nose);
-      tailMaterial.color.set(originalColors.tailTip); // Resetar cor da ponta da cauda
-
-      // Atualizar os valores dos inputs
-      document.getElementById('bodyColor').value = `#${originalColors.body.toString(16).padStart(6, '0')}`;
-      document.getElementById('eyeColor').value = `#${originalColors.eyes.toString(16).padStart(6, '0')}`;
-      document.getElementById('noseColor').value = `#${originalColors.nose.toString(16).padStart(6, '0')}`;
-      document.getElementById('tailTipColor').value = `#${originalColors.tailTip.toString(16).padStart(6, '0')}`;
-    });
-
-
-    // Função para calcular uma cor mais escura
-    function getDarkerColor(hexColor, factor = 0.5) {
-      const color = new THREE.Color(hexColor);
-      color.multiplyScalar(factor); // Escurece a cor multiplicando por um fator (menor que 1)
-      return color.getHex();
-    }
-
-    let tailRotation = 0;
-    let isBlinking = false;
-    let blinkTime = 0;
-    let breathTime = 0;
-    let nextBlink = 500;
-    let holdClosedTime = 0;
-
-    let isWalking = false;
-    let walkTime = 0;
-
-    // Função para alternar o estado de caminhada
-    document.getElementById('toggleWalk').addEventListener('click', () => {
-      isWalking = !isWalking;
-      document.getElementById('toggleWalk').textContent = isWalking ? 'Parar de Andar' : 'Ativar Andar';
-    });
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      // Breathing animation
-      const breathScale = 1 + 0.04 * Math.sin(breathTime);
-      body.scale.y = breathScale;
-      body.scale.x = 1 + (0.01 * Math.sin(breathTime));
-      body.scale.z = 1 + (0.025 * Math.sin(breathTime));
-      breathTime += 0.015;
-
-      // Tail animation
-      tailBase.rotation.y = Math.sin(tailRotation) * 0.05;
-      tailRotation += 0.05;
-
-      // Blinking animation
-      blinkTime += 2;
-
-      if (!isBlinking && blinkTime >= nextBlink) {
-        isBlinking = true;
-        blinkTime = 0;
-        holdClosedTime = 0;
-      }
-
-      if (isBlinking) {
-        const blinkPhase = blinkTime * 0.03;
-
-        if (blinkPhase < Math.PI / 2) {
-          // Closing phase
-          const blinkScale = Math.max(0, Math.cos(blinkPhase));
-          leftEye.scale.y = blinkScale;
-          rightEye.scale.y = blinkScale;
-          leftPupil.scale.y = blinkScale;
-          rightPupil.scale.y = blinkScale;
-
-          if (blinkScale <= 0) {
-            holdClosedTime++;
-            if (holdClosedTime >= 20) {
-              blinkTime = Math.PI / 2;
-            }
-          }
-        } else {
-          // Opening phase - using same cosine animation
-          const blinkScale = Math.max(0, Math.cos(Math.PI - blinkPhase));
-          leftEye.scale.y = blinkScale;
-          rightEye.scale.y = blinkScale;
-          leftPupil.scale.y = blinkScale;
-          rightPupil.scale.y = blinkScale;
-
-          if (blinkPhase >= Math.PI) {
-            isBlinking = false;
-            leftEye.scale.y = 1;
-            rightEye.scale.y = 1;
-            leftPupil.scale.y = 1;
-            rightPupil.scale.y = 1;
-            blinkTime = 0;
-            nextBlink = 500;
-          }
-        }
-
-      }
-
-      if (isWalking) {
-        walkTime += 0.1;
-        const legRotation = Math.sin(walkTime) * 0.5;
-        rightFrontLeg.rotation.z = legRotation;
-        leftBackLeg.rotation.z = -legRotation;
-        leftFrontLeg.rotation.z = -legRotation;
-        rightBackLeg.rotation.z = legRotation;
-
-        // Movimento do corpo para frente e para trás
-        body.position.y += 0.001 * Math.cos(walkTime);
-      }
-
-      controls.update();
-      renderer.render(scene, camera);
-    }
-
-    animate();
-
-    // Ajustar tela
-    window.addEventListener('resize', () => {
-      renderer.setSize(window.innerWidth, window.innerHeight);
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-    });
-  </script>
+</html>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="./script.js"></script>
 </body>
 
 </html>

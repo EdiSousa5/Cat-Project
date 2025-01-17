@@ -1,0 +1,135 @@
+/* Define o estilo global para o body */
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+/* Faz o canvas ocupar o espaço disponível */
+canvas {
+  display: block;
+}
+
+.controls {
+  position: absolute;
+  z-index: 1001;
+}
+
+#mainControls {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#mainControls button {
+  width: 180px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s;
+  margin-bottom: 10px;
+}
+
+#mainControls #customizeButton {
+  background-color: rgb(126, 236, 255);
+}
+
+#customizeMenu {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: none;
+  width: 250px;
+}
+
+.colorControls, .sizeControls {
+  margin: 15px 0;
+}
+
+.colorControls label, .sizeControls label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+input[type="range"] {
+  width: 100%;
+  margin: 8px 0 15px 0;
+}
+
+input[type="color"] {
+  width: 100%;
+  height: 40px;
+  margin-bottom: 15px;
+}
+
+#closeCustomize {
+  width: 100%;
+  padding: 10px;
+  margin-top: 15px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Estilo para o contêiner de exibição de FPS */
+#fpsDisplay {
+  position: absolute;
+  bottom: 125px;
+  right: 15px;
+  background: rgb(169, 169, 169);
+  padding: 5px;
+  border-radius: 5px;
+  z-index: 2;
+}
+
+/* Estilo para o gráfico de FPS */
+#fpsChart {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid black;
+}
+
+#toggleCamera {
+  margin-top: 10px;
+  padding: 5px 10px;
+  background: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  width: 150px; /* Fixed width for consistent sizing */
+  transition: background-color 0.3s;
+}
+
+#toggleCamera.following {
+  background: #4CAF50;
+}
+
+#toggleCamera.manual {
+  background: #f44336;
+}
+
+#toggleCamera:hover.following {
+  background: #45a049;
+}
+
+#toggleCamera:hover.manual {
+  background: #da190b;
+}
