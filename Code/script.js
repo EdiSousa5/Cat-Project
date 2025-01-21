@@ -29,12 +29,17 @@ const camera = new THREE.PerspectiveCamera(
   50,
   window.innerWidth / window.innerHeight,
   0.1,
-  100000  // Increased far clipping plane
+  100000 // Increased far clipping plane
 );
 camera.position.set(5, 6, 5);
 
 // Customize camera setup
-const customizeCamera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const customizeCamera = new THREE.PerspectiveCamera(
+  75,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  1000
+);
 customizeCamera.position.set(0, 4, 4);
 customizeCamera.lookAt(0, 0, 0);
 
@@ -313,7 +318,6 @@ function createEnvironment() {
   const tvBase = createTvBase();
   const catBed = createCatBed();
 
-
   // Add all to scene
   mainScene.add(door);
   mainScene.add(lamp);
@@ -333,20 +337,26 @@ function createEnvironment() {
 
   // Add ceiling spotlight
   // In createEnvironment function
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  // Update ceiling light settings
   const ceilingLight = new THREE.SpotLight(0xfff8b7, 1.8);
   ceilingLight.position.set(0, 10, 0);
-  ceilingLight.penumbra = 0.2;
-  ceilingLight.decay = 1.5;
-  ceilingLight.distance = 18;
-
-  // Improve shadow quality
+  ceilingLight.penumbra = 0.3;
+  ceilingLight.decay = 1.8;
+  ceilingLight.distance = 20;
+  ceilingLight.angle = Math.PI / 3;
+  
+  // Ultra-high quality shadow settings
   ceilingLight.castShadow = true;
-  ceilingLight.shadow.mapSize.width = 2048;
-  ceilingLight.shadow.mapSize.height = 2048;
-  ceilingLight.shadow.camera.near = 0.5;
-  ceilingLight.shadow.camera.far = 15;
-  ceilingLight.shadow.bias = -0.001;
-  ceilingLight.shadow.normalBias = 0.02;
+  ceilingLight.shadow.mapSize.width = 8192;   // Maximum resolution
+  ceilingLight.shadow.mapSize.height = 8192;  // Maximum resolution
+  ceilingLight.shadow.camera.near = 0.1;
+  ceilingLight.shadow.camera.far = 20;
+  ceilingLight.shadow.bias = -0.0001;         // Ultra-fine bias
+  ceilingLight.shadow.normalBias = 0.005;     // Reduced for sharp details
+  ceilingLight.shadow.radius = 4;             // Increased blur
+  ceilingLight.shadow.blurSamples = 32; 
 
   mainScene.add(ambientLight);
   mainScene.add(ceilingLight);
@@ -354,21 +364,26 @@ function createEnvironment() {
   // Call for both scenes
   createStars(mainScene);
   createStars(customizeScene);
-
 }
 
 function createStars(scene) {
   const starsGroup = new THREE.Group();
-  const starMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
-  const starGeometry = new THREE.BoxGeometry(0.15, .15, .15);
+  const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const starGeometry = new THREE.BoxGeometry(0.15, 0.15, 0.15);
   const minDistance = 75;
   const maxDistance = 125;
 
   for (let i = 0; i < 5000; i++) {
     const star = new THREE.Mesh(starGeometry, starMaterial);
-    const x = (Math.random() - 0.5) * maxDistance + (Math.sign(Math.random() - 0.5) * minDistance);
-    const y = (Math.random() - 0.5) * maxDistance + (Math.sign(Math.random() - 0.5) * minDistance);
-    const z = (Math.random() - 0.5) * maxDistance + (Math.sign(Math.random() - 0.5) * minDistance);
+    const x =
+      (Math.random() - 0.5) * maxDistance +
+      Math.sign(Math.random() - 0.5) * minDistance;
+    const y =
+      (Math.random() - 0.5) * maxDistance +
+      Math.sign(Math.random() - 0.5) * minDistance;
+    const z =
+      (Math.random() - 0.5) * maxDistance +
+      Math.sign(Math.random() - 0.5) * minDistance;
 
     star.position.set(x, y, z);
     starsGroup.add(star);
@@ -384,31 +399,28 @@ function createCatBed() {
   const base = new THREE.Mesh(
     new THREE.BoxGeometry(3, 0.3, 2.2),
     new THREE.MeshStandardMaterial({
-      color: 0x105179
-
+      color: 0x105179,
     })
   );
 
   const back = new THREE.Mesh(
     new THREE.BoxGeometry(3, 0.8, 0.3),
     new THREE.MeshStandardMaterial({
-      color: 0x105179
-
+      color: 0x105179,
     })
   );
-  back.position.set(0, .5, 0.95);
+  back.position.set(0, 0.5, 0.95);
 
   const leftArm = new THREE.Mesh(
     new THREE.BoxGeometry(0.3, 0.5, 2),
     new THREE.MeshStandardMaterial({
-      color: 0x105179
-
+      color: 0x105179,
     })
   );
 
   const rightArm = leftArm.clone();
-  rightArm.position.set(-1.35, .3, -0.1);
-  leftArm.position.set(1.35, .3, -0.1);
+  rightArm.position.set(-1.35, 0.3, -0.1);
+  leftArm.position.set(1.35, 0.3, -0.1);
 
   // Add cushion
   const cushion = new THREE.Mesh(
@@ -433,10 +445,10 @@ function createDoor() {
   );
 
   const doorInside = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 4, .002),
+    new THREE.BoxGeometry(2, 4, 0.002),
     new THREE.MeshStandardMaterial({ color: 0xe09449 }) // Darker wood for inner panel
   );
-  doorInside.position.set(0, 0, .1);
+  doorInside.position.set(0, 0, 0.1);
 
   const doorknob = new THREE.Mesh(
     new THREE.SphereGeometry(0.12, 40, 40),
@@ -475,17 +487,17 @@ function createLamp() {
     new THREE.CylinderGeometry(0.6, 0.6, 1, 32, 1, true),
     new THREE.MeshStandardMaterial({
       color: 0xf5f5f5,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     })
   );
   outerShade.position.y = 3.8;
 
   // Add light source inside shade
-  const lampLight = new THREE.PointLight(0xFFF684, 0.4);
+  const lampLight = new THREE.PointLight(0xfff684, 0.4);
   lampLight.position.y = 3.8;
 
   // Apply shadows
-  [base, pole, outerShade].forEach(part => {
+  [base, pole, outerShade].forEach((part) => {
     part.castShadow = true;
     part.receiveShadow = true;
   });
@@ -505,13 +517,13 @@ function createPainting() {
 
   // Load texture for painting
   const textureLoader = new THREE.TextureLoader();
-  const paintingTexture = textureLoader.load('./Assets/catPainting.avif');
+  const paintingTexture = textureLoader.load("./Assets/catPainting.avif");
 
   const inside = new THREE.Mesh(
     new THREE.BoxGeometry(0.1, 1.5, 2.5),
     new THREE.MeshStandardMaterial({
       map: paintingTexture,
-      side: THREE.DoubleSide
+      side: THREE.DoubleSide,
     })
   );
   inside.position.set(0.01, 0, 0);
@@ -581,13 +593,13 @@ function createCabinet() {
   const bookBaseHeight = 0.8;
   const colors = [
     0x000080, // Navy Blue
-    0x2F4F4F, // Dark Slate Gray
-    0x483D8B, // Dark Slate Blue
-    0x4B0082, // Indigo
-    0x556B2F, // Dark Olive Green
+    0x2f4f4f, // Dark Slate Gray
+    0x483d8b, // Dark Slate Blue
+    0x4b0082, // Indigo
+    0x556b2f, // Dark Olive Green
     0x800080, // Purple
     0x003366, // Dark Navy
-    0x1a472a  // Dark Green
+    0x1a472a, // Dark Green
   ];
 
   shelves.forEach((shelf) => {
@@ -597,32 +609,38 @@ function createCabinet() {
     const spacing = 0.02;
 
     // Calculate total width including all books and spaces
-    const totalWidth = (numBooks * bookWidth) + ((numBooks - 1) * spacing);
+    const totalWidth = numBooks * bookWidth + (numBooks - 1) * spacing;
     // Center starting position on shelf
-    const startZ = -(shelfWidth / 2) + ((shelfWidth - totalWidth) / 2);
+    const startZ = -(shelfWidth / 2) + (shelfWidth - totalWidth) / 2;
 
     for (let i = 0; i < numBooks; i++) {
       const randomHeight = bookBaseHeight + (Math.random() * 0.2 - 0.1);
       const bookGeometry = new THREE.BoxGeometry(0.2, randomHeight, bookWidth);
       const bookMaterial = new THREE.MeshStandardMaterial({
-        color: colors[Math.floor(Math.random() * colors.length)]
+        color: colors[Math.floor(Math.random() * colors.length)],
       });
       const book = new THREE.Mesh(bookGeometry, bookMaterial);
 
       // Position books with fixed spacing from centered start position
-      const zPosition = startZ + (i * (bookWidth + spacing));
-      book.position.set(-0.5, shelf.position.y + (randomHeight / 2), zPosition + bookWidth / 2);
+      const zPosition = startZ + i * (bookWidth + spacing);
+      book.position.set(
+        -0.5,
+        shelf.position.y + randomHeight / 2,
+        zPosition + bookWidth / 2
+      );
       book.castShadow = true;
       book.receiveShadow = true;
       cabinet.add(book);
     }
   });
 
-  [backPanel, leftPanel, rightPanel, topPanel, bottomPanel, ...shelves].forEach(part => {
-    part.castShadow = true;
-    part.receiveShadow = true;
-    cabinet.add(part);
-  });
+  [backPanel, leftPanel, rightPanel, topPanel, bottomPanel, ...shelves].forEach(
+    (part) => {
+      part.castShadow = true;
+      part.receiveShadow = true;
+      cabinet.add(part);
+    }
+  );
 
   cabinet.position.set(-5.5, 1.8, 2);
   return cabinet;
@@ -655,7 +673,7 @@ function createCenterTable() {
   const leg4 = new THREE.Mesh(legGeometry, legMaterial);
   leg4.position.set(-1.5, -0.7, -1); // Left back
 
-  [leg1, leg2, leg3, leg4].forEach(leg => {
+  [leg1, leg2, leg3, leg4].forEach((leg) => {
     leg.castShadow = true;
     leg.receiveShadow = true;
     tableGroup.add(leg);
@@ -753,15 +771,24 @@ function createTvBase() {
   rightSupport.position.set(0.85, -0.85, 0);
 
   // Apply shadows to all parts
-  [basePanel, topPanel, backPanel,
-    leftCabinet, rightCabinet,
-    leftDoor, rightDoor,
-    leftHandle, rightHandle,
-    middleShelf, leftSupport, rightSupport].forEach(part => {
-      part.castShadow = true;
-      part.receiveShadow = true;
-      tvBase.add(part);
-    });
+  [
+    basePanel,
+    topPanel,
+    backPanel,
+    leftCabinet,
+    rightCabinet,
+    leftDoor,
+    rightDoor,
+    leftHandle,
+    rightHandle,
+    middleShelf,
+    leftSupport,
+    rightSupport,
+  ].forEach((part) => {
+    part.castShadow = true;
+    part.receiveShadow = true;
+    tvBase.add(part);
+  });
 
   tvBase.position.set(0, 1, -5.8);
   return tvBase;
@@ -821,7 +848,9 @@ function createCouch() {
   cushion3.receiveShadow = true;
 
   const armCushionGeometry = new THREE.BoxGeometry(1, 1.2, 0.2);
-  const armCushionMaterial = new THREE.MeshStandardMaterial({ color: 0xffa040 });
+  const armCushionMaterial = new THREE.MeshStandardMaterial({
+    color: 0xffa040,
+  });
 
   const leftArmCushion = new THREE.Mesh(armCushionGeometry, armCushionMaterial);
   leftArmCushion.position.set(-1.8, 0.9, 0.6);
@@ -829,15 +858,26 @@ function createCouch() {
   leftArmCushion.castShadow = true;
   leftArmCushion.receiveShadow = true;
 
-  const rightArmCushion = new THREE.Mesh(armCushionGeometry, armCushionMaterial);
+  const rightArmCushion = new THREE.Mesh(
+    armCushionGeometry,
+    armCushionMaterial
+  );
   rightArmCushion.position.set(1.8, 0.9, 0.6);
   rightArmCushion.rotation.set(0.2, 0, 0);
   rightArmCushion.castShadow = true;
   rightArmCushion.receiveShadow = true;
 
-  couch.add(base, back, rightArm, leftArm,
-    cushion1, cushion2, cushion3,
-    leftArmCushion, rightArmCushion);
+  couch.add(
+    base,
+    back,
+    rightArm,
+    leftArm,
+    cushion1,
+    cushion2,
+    cushion3,
+    leftArmCushion,
+    rightArmCushion
+  );
   couch.position.set(0, -0.2, 5.25);
   return couch;
 }
@@ -855,7 +895,7 @@ const zoneMaterial = new THREE.MeshBasicMaterial({
   color: 0x00ff00,
   transparent: true,
   opacity: 0.9,
-  visible: false
+  visible: false,
 });
 
 let zonesVisible = false;
@@ -864,17 +904,11 @@ let zonesVisible = false;
 function createWalkableZones() {
   const zones = new THREE.Group();
 
-  const zone1 = new THREE.Mesh(
-    new THREE.PlaneGeometry(10, 6.9),
-    zoneMaterial
-  );
+  const zone1 = new THREE.Mesh(new THREE.PlaneGeometry(10, 6.9), zoneMaterial);
   zone1.rotation.x = -Math.PI / 2;
   zone1.position.set(0, -0.65, -0.4);
 
-  const zone2 = new THREE.Mesh(
-    new THREE.PlaneGeometry(2, 8),
-    zoneMaterial
-  );
+  const zone2 = new THREE.Mesh(new THREE.PlaneGeometry(2, 8), zoneMaterial);
   zone2.rotation.x = -Math.PI / 2;
   zone2.position.set(4.5, -0.65, -0.95);
 
@@ -887,10 +921,10 @@ walkableZones = createWalkableZones();
 mainScene.add(walkableZones);
 
 // Then add event listener
-window.addEventListener('keydown', (event) => {
-  if (event.key.toLowerCase() === 'f') {
+window.addEventListener("keydown", (event) => {
+  if (event.key.toLowerCase() === "f") {
     zonesVisible = !zonesVisible;
-    walkableZones.children.forEach(zone => {
+    walkableZones.children.forEach((zone) => {
       zone.material.visible = zonesVisible;
     });
   }
@@ -910,8 +944,7 @@ function onFloorClick(event) {
   if (intersects.length > 0) {
     const point = intersects[0].point;
     targetPosition = point;
-    isMoving = true;
-    isRotating = true;
+    isMoving = true;;
 
     const direction = new THREE.Vector2(
       targetPosition.x - catGroup.position.x,
@@ -930,7 +963,7 @@ mainScene.add(walkableZones);
 let tailRotation = 0;
 let isBlinking = false;
 let blinkTime = 0;
-let nextBlink = 1000;
+let nextBlink = 800;
 let holdClosedTime = 0;
 let isWalking = false;
 let walkTime = 0;
@@ -938,16 +971,19 @@ let previousCameraMode = true;
 
 let targetPosition = null;
 let isMoving = false;
-const moveSpeed = 0.03;
-let isRotating = false;
-const rotationSpeed = 0.07;
+
+const BASE_MOVE_SPEED = 0.06;
+let getScreenSizeFactor = () => Math.min(window.innerWidth, window.innerHeight) / 1000;
+let moveSpeed = BASE_MOVE_SPEED * getScreenSizeFactor();
+
+const rotationSpeed = 0.04;
 const targetRotation = new THREE.Euler();
 
 // ============= ANIMATION FUNCTIONS =============
 
 function updateTail() {
   tailBase.rotation.y = Math.sin(tailRotation) * 0.1;
-  tailRotation += 0.02;
+  tailRotation += 0.08;
 }
 
 function updateBlinking() {
@@ -1000,54 +1036,63 @@ function updateBlinking() {
 function updateWalking() {
   if (!isWalking) return;
 
-  walkTime += 0.05;
+  walkTime += 0.08;
   const legRotation = Math.sin(walkTime) * 0.4;
   rightFrontLeg.rotation.z = legRotation;
   leftBackLeg.rotation.z = legRotation;
   leftFrontLeg.rotation.z = -legRotation;
   rightBackLeg.rotation.z = -legRotation;
 
-  body.position.y += 0.0006 * Math.cos(walkTime);
+  body.position.y += 0.0008 * Math.cos(walkTime);
 }
 
 function updateMovement() {
   if (!isMoving || !targetPosition) return;
 
-  if (isRotating) {
-    const currentRotation = catGroup.rotation.y;
-    const rotationDiff = targetRotation.y - currentRotation;
-    const normalizedDiff = ((rotationDiff + Math.PI) % (Math.PI * 2)) - Math.PI;
+  const distance = new THREE.Vector2(
+    targetPosition.x - catGroup.position.x,
+    targetPosition.z - catGroup.position.z
+  ).length();
 
-    if (Math.abs(normalizedDiff) > 0.05) {
-      catGroup.rotation.y += Math.sign(normalizedDiff) * rotationSpeed;
-    } else {
-      isRotating = false;
-      isWalking = true;
-    }
-  } else {
-    const distance = new THREE.Vector2(
+  if (distance > 0.1) {
+    const targetAngle = Math.atan2(
       targetPosition.x - catGroup.position.x,
       targetPosition.z - catGroup.position.z
-    ).length();
+    ) - Math.PI/2;
 
-    if (distance > 0.1) {
-      const direction = new THREE.Vector2(
-        targetPosition.x - catGroup.position.x,
-        targetPosition.z - catGroup.position.z
-      ).normalize();
+    const currentRotation = catGroup.rotation.y;
+    let rotationDiff = targetAngle - currentRotation;
+    
+    while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
+    while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
 
-      catGroup.position.x += direction.x * moveSpeed;
-      catGroup.position.z += direction.y * moveSpeed;
-    } else {
-      isMoving = false;
-      isWalking = false;
-      targetPosition = null;
+    head.rotation.y = Math.sign(rotationDiff) * Math.min(Math.abs(rotationDiff), Math.PI/4);
+    
+    // Slower rotation
+    catGroup.rotation.y += rotationDiff * rotationSpeed;
 
-      rightFrontLeg.rotation.z = 0;
-      leftBackLeg.rotation.z = 0;
-      leftFrontLeg.rotation.z = 0;
-      rightBackLeg.rotation.z = 0;
-    }
+    const direction = new THREE.Vector2(
+      targetPosition.x - catGroup.position.x,
+      targetPosition.z - catGroup.position.z
+    ).normalize();
+
+    // Reduce speed while turning
+    const turnSpeedModifier = Math.cos(Math.abs(rotationDiff));
+    const currentSpeed = moveSpeed * Math.max(0.3, turnSpeedModifier);
+
+    catGroup.position.x += direction.x * currentSpeed;
+    catGroup.position.z += direction.y * currentSpeed;
+    isWalking = true;
+  } else {
+    isMoving = false;
+    isWalking = false;
+    targetPosition = null;
+    head.rotation.y = 0;
+
+    rightFrontLeg.rotation.z = 0;
+    leftBackLeg.rotation.z = 0;
+    leftFrontLeg.rotation.z = 0;
+    rightBackLeg.rotation.z = 0;
   }
 }
 
@@ -1107,7 +1152,10 @@ rotatePlatform.add(customizeFloor);
 rotatePlatform.add(secondCatGroup);
 customizeScene.add(rotatePlatform);
 
-const customizeOrbitControls = new THREE.OrbitControls(customizeCamera, renderer.domElement);
+const customizeOrbitControls = new THREE.OrbitControls(
+  customizeCamera,
+  renderer.domElement
+);
 customizeOrbitControls.enableZoom = false;
 customizeOrbitControls.enablePan = false;
 customizeOrbitControls.minPolarAngle = Math.PI / 4;
@@ -1152,13 +1200,14 @@ closeCustomizeButton.addEventListener("click", () => {
   controls.enabled = !cameraFollowing;
 
   // Update button state
-  cameraButton.textContent = cameraFollowing ? "Camera: Following Cat" : "Camera: Manual";
+  cameraButton.textContent = cameraFollowing
+    ? "Camera: Following Cat"
+    : "Camera: Manual";
   cameraButton.className = cameraFollowing ? "following" : "manual";
 
   camera.position.set(0, 2, 10);
   camera.lookAt(0, 0, 0);
 });
-
 
 // ============= MENU - CHANCHE COLORS =============
 
@@ -1221,7 +1270,6 @@ function getDarkerColor(hexColor, factor = 0.5) {
   return color.getHex();
 }
 
-
 // ============= MENU - CHANCHE SIZE  =============
 
 // Add size control event listeners
@@ -1232,8 +1280,10 @@ document.getElementById("bodySize").addEventListener("input", (event) => {
 
   // Store original positions and current scales of children
   const originalChildren = [...body.children];
-  const originalPositions = originalChildren.map(child => child.position.clone());
-  const currentScales = originalChildren.map(child => child.scale.clone());
+  const originalPositions = originalChildren.map((child) =>
+    child.position.clone()
+  );
+  const currentScales = originalChildren.map((child) => child.scale.clone());
   const originalY = body.position.y;
 
   // Scale body
@@ -1251,8 +1301,8 @@ document.getElementById("bodySize").addEventListener("input", (event) => {
   if (secondCatGroup) {
     const cloneBody = secondCatGroup.getObjectByName("body");
     const cloneChildren = [...cloneBody.children];
-    const clonePositions = cloneChildren.map(child => child.position.clone());
-    const cloneScales = cloneChildren.map(child => child.scale.clone());
+    const clonePositions = cloneChildren.map((child) => child.position.clone());
+    const cloneScales = cloneChildren.map((child) => child.scale.clone());
     const cloneOriginalY = cloneBody.position.y;
 
     cloneBody.scale.set(scale, scale, scale);
@@ -1314,11 +1364,11 @@ document.getElementById("resetSize").addEventListener("click", () => {
   catGroup.scale.set(1, 1, 1);
   catGroup.position.set(0, 0.1, 0); // Reset to original position
 
-  [body, head, tailBase].forEach(part => {
+  [body, head, tailBase].forEach((part) => {
     part.scale.set(1, 1, 1);
   });
 
-  [rightFrontLeg, leftFrontLeg, rightBackLeg, leftBackLeg].forEach(leg => {
+  [rightFrontLeg, leftFrontLeg, rightBackLeg, leftBackLeg].forEach((leg) => {
     leg.scale.set(1, 1, 1);
   });
 
@@ -1327,15 +1377,17 @@ document.getElementById("resetSize").addEventListener("click", () => {
     secondCatGroup.scale.set(1, 1, 1);
     secondCatGroup.position.set(0, 0.8, 0);
 
-    ['body', 'head', 'tailBase'].forEach(partName => {
+    ["body", "head", "tailBase"].forEach((partName) => {
       const part = secondCatGroup.getObjectByName(partName);
       if (part) part.scale.set(1, 1, 1);
     });
 
-    ['rightFrontLeg', 'leftFrontLeg', 'rightBackLeg', 'leftBackLeg'].forEach(legName => {
-      const leg = secondCatGroup.getObjectByName(legName);
-      if (leg) leg.scale.set(1, 1, 1);
-    });
+    ["rightFrontLeg", "leftFrontLeg", "rightBackLeg", "leftBackLeg"].forEach(
+      (legName) => {
+        const leg = secondCatGroup.getObjectByName(legName);
+        if (leg) leg.scale.set(1, 1, 1);
+      }
+    );
   }
 });
 
@@ -1347,16 +1399,16 @@ function animate() {
   if (isCustomizing) {
     customizeOrbitControls.update();
     renderer.render(customizeScene, customizeCamera);
-  } else {
-    updateTail();
-    updateBlinking();
-    updateWalking();
-    updateMovement();
-    updateCamera();
-
-    controls.update();
-    renderer.render(mainScene, activeCamera);
+    return;
   }
+  updateTail();
+  updateBlinking();
+  updateWalking();
+  updateMovement();
+  updateCamera();
+
+  controls.update();
+  renderer.render(mainScene, activeCamera);
 
   updateFPS();
 }
@@ -1376,5 +1428,6 @@ window.addEventListener("resize", () => {
 
   customizeCamera.aspect = width / height;
   customizeCamera.updateProjectionMatrix();
-});
 
+  moveSpeed = BASE_MOVE_SPEED * getScreenSizeFactor();
+});

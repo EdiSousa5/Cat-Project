@@ -16,65 +16,114 @@ body {
 
 #fpsDisplay {
   position: fixed;
-  top: 10px;
-  right: 10px;
+  top: clamp(8px, 1.5vh, 15px);
+  right: clamp(8px, 1.5vw, 15px);
   background: rgba(0, 0, 0, 0.7);
   color: white;
-  padding: 8px 12px;
+  padding: clamp(6px, 0.8vh, 10px) clamp(8px, 1vw, 12px);
   border-radius: 4px;
-  font-size: 14px;
+  font-size: clamp(10px, 1.2vw, 14px);
   z-index: 1;
 }
 
-/* Common menu styles */
 #mainControls, #customizeMenu {
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: clamp(8px, 1.5vh, 15px);
+  left: clamp(8px, 1.5vw, 15px);
   background: rgba(255, 255, 255);
-  border-radius: 12px;
+  border-radius: clamp(6px, 0.8vw, 10px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-  padding: 20px;
   z-index: 1;
 }
 
 #mainControls {
   display: flex;
   flex-direction: column;
-  width: 220px;
+  width: clamp(180px, 18vw, 200px);
+  padding: clamp(10px, 1.5vh, 20px);
 }
 
 #customizeMenu {
-  width: 12vw;
-  height: 86vh;
-  padding: 2vh 1.5vw;
+  width: clamp(220px, 22vw, 300px);
+  height: auto;
+  padding: clamp(10px, 1.5vh, 20px);
   display: none;
 }
 
-/* Common heading styles */
 #mainControls h3, #customizeMenu h3 {
-  margin: 0 0 15px 0;
+  margin: 0 0 clamp(6px, 0.8vh, 12px) 0;
   color: #333;
-  font-size: 18px;
+  font-size: clamp(12px, 1.4vw, 16px);
   border-bottom: 2px solid #e0e0e0;
-  padding-bottom: 8px;
+  padding-bottom: clamp(4px, 0.6vh, 8px);
 }
 
-/* Common button styles */
 #mainControls button, #customizeMenu button {
   width: 100%;
-  padding: 12px;
+  padding: clamp(6px, 0.8vh, 12px);
   border: none;
-  border-radius: 8px;
+  border-radius: clamp(4px, 0.6vw, 8px);
   cursor: pointer;
-  font-size: 14px;
+  font-size: clamp(11px, 1.2vw, 14px);
   font-weight: 600;
   transition: all 0.3s ease;
-  margin-bottom: 12px;
+  margin-bottom: clamp(6px, 0.8vh, 10px);
   color: white;
 }
 
-/* Specific button colors */
+#mainControls button:hover, #customizeMenu button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.colorControls, .sizeControls {
+  background: rgba(0, 0, 0, 0.03);
+  padding: clamp(8px, 1vh, 15px);
+  border-radius: clamp(4px, 0.6vw, 8px);
+  margin: clamp(8px, 1vh, 15px) 0;
+}
+
+.colorControls label, .sizeControls label {
+  display: block;
+  margin-bottom: clamp(4px, 0.6vh, 8px);
+  font-weight: 600;
+  color: #444;
+  font-size: clamp(11px, 1.2vw, 14px);
+}
+
+input[type="range"] {
+  width: 100%;
+  margin: clamp(4px, 0.6vh, 8px) 0 clamp(8px, 1vh, 12px) 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  background: #e0e0e0;
+  height: clamp(3px, 0.4vh, 6px);
+  border-radius: 3px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: clamp(12px, 1.5vw, 16px);
+  height: clamp(12px, 1.5vw, 16px);
+  background: #2196F3;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+input[type="color"] {
+  width: 100%;
+  height: clamp(25px, 3vh, 35px);
+  border: none;
+  border-radius: clamp(4px, 0.6vw, 8px);
+  margin-bottom: clamp(8px, 1vh, 12px);
+  cursor: pointer;
+}
+
 #toggleCamera.following {
   background: #4CAF50;
 }
@@ -95,95 +144,20 @@ body {
   background: #4CAF50;
 }
 
-/* Button hover effects */
-#mainControls button:hover, #customizeMenu button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-}
-
-/* Control groups */
-.colorControls, .sizeControls {
-  background: rgba(0, 0, 0, 0.03);
-  padding: 15px;
-  border-radius: 8px;
-  margin: 15px 0;
-}
-
-/* Input styles */
-.colorControls label, .sizeControls label {
-  display: block;
-  margin-bottom: 8px;
-  font-weight: 600;
-  color: #444;
-}
-
-input[type="range"] {
-  width: 100%;
-  margin: 8px 0 15px 0;
-  cursor: pointer;
-  -webkit-appearance: none;
-  background: #e0e0e0;
-  height: 6px;
-  border-radius: 3px;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  background: #2196F3;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-}
-
-input[type="color"] {
-  width: 100%;
-  height: 40px;
-  border: none;
-  border-radius: 6px;
-  margin-bottom: 15px;
-  cursor: pointer;
-}
-
-/* Responsive Design */
-@media screen and (max-width: 768px) {
-  #mainControls, #customizeMenu {
-    width: calc(100% - 40px);
-    left: 50%;
-    transform: translateX(-50%);
-    max-width: 400px;
-  }
-
-  input[type="range"] {
-    width: 100%;
-  }
-
-  #mainControls button, #customizeMenu button {
-    padding: 15px;
-    font-size: 16px;
-  }
-}
-
 @media screen and (max-width: 480px) {
   #mainControls, #customizeMenu {
-    top: 5px;
-    padding: 15px;
+    width: calc(100% - clamp(16px, 3vw, 30px));
+    left: 50%;
+    transform: translateX(-50%);
   }
+}
 
-  h3 {
-    font-size: 16px;
+@media screen and (min-width: 481px) and (max-width: 768px) {
+  #mainControls {
+    width: clamp(200px, 35vw, 250px);
   }
-
-  .colorControls label, .sizeControls label {
-    font-size: 14px;
-  }
-
-  input[type="color"] {
-    height: 35px;
+  
+  #customizeMenu {
+    width: clamp(250px, 45vw, 300px);
   }
 }
