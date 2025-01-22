@@ -346,7 +346,7 @@ function createEnvironment() {
   ceilingLight.decay = 1.8;
   ceilingLight.distance = 20;
   ceilingLight.angle = Math.PI / 3;
-  
+
   // Ultra-high quality shadow settings
   ceilingLight.castShadow = true;
   ceilingLight.shadow.mapSize.width = 8192;   // Maximum resolution
@@ -356,7 +356,7 @@ function createEnvironment() {
   ceilingLight.shadow.bias = -0.0001;         // Ultra-fine bias
   ceilingLight.shadow.normalBias = 0.005;     // Reduced for sharp details
   ceilingLight.shadow.radius = 4;             // Increased blur
-  ceilingLight.shadow.blurSamples = 32; 
+  ceilingLight.shadow.blurSamples = 32;
 
   mainScene.add(ambientLight);
   mainScene.add(ceilingLight);
@@ -963,7 +963,7 @@ mainScene.add(walkableZones);
 let tailRotation = 0;
 let isBlinking = false;
 let blinkTime = 0;
-let nextBlink = 800;
+let nextBlink = 600;
 let holdClosedTime = 0;
 let isWalking = false;
 let walkTime = 0;
@@ -972,18 +972,22 @@ let previousCameraMode = true;
 let targetPosition = null;
 let isMoving = false;
 
-const BASE_MOVE_SPEED = 0.06;
+let currentHeadRotation = 0;
+const HEAD_ROTATION_SPEED = 0.03;
+
+const BASE_MOVE_SPEED = 0.015;
 let getScreenSizeFactor = () => Math.min(window.innerWidth, window.innerHeight) / 1000;
 let moveSpeed = BASE_MOVE_SPEED * getScreenSizeFactor();
+console.log(moveSpeed);
 
-const rotationSpeed = 0.04;
+const rotationSpeed = 0.01;
 const targetRotation = new THREE.Euler();
 
 // ============= ANIMATION FUNCTIONS =============
 
 function updateTail() {
   tailBase.rotation.y = Math.sin(tailRotation) * 0.1;
-  tailRotation += 0.08;
+  tailRotation += 0.03;
 }
 
 function updateBlinking() {
@@ -1027,7 +1031,7 @@ function updateBlinking() {
         leftPupil.scale.y = 1;
         rightPupil.scale.y = 1;
         blinkTime = 0;
-        nextBlink = 1000;
+        nextBlink = 600;
       }
     }
   }
@@ -1058,17 +1062,21 @@ function updateMovement() {
     const targetAngle = Math.atan2(
       targetPosition.x - catGroup.position.x,
       targetPosition.z - catGroup.position.z
-    ) - Math.PI/2;
+    ) - Math.PI / 2;
 
     const currentRotation = catGroup.rotation.y;
     let rotationDiff = targetAngle - currentRotation;
-    
+
     while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
     while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
 
-    head.rotation.y = Math.sign(rotationDiff) * Math.min(Math.abs(rotationDiff), Math.PI/4);
-    
-    // Slower rotation
+    // Smooth head rotation
+    const targetHeadRotation = Math.sign(rotationDiff) * Math.min(Math.abs(rotationDiff), Math.PI / 4);
+    const headRotationDiff = targetHeadRotation - currentHeadRotation;
+    currentHeadRotation += headRotationDiff * HEAD_ROTATION_SPEED;
+    head.rotation.y = currentHeadRotation;
+
+    // Rest of movement code
     catGroup.rotation.y += rotationDiff * rotationSpeed;
 
     const direction = new THREE.Vector2(
@@ -1076,9 +1084,8 @@ function updateMovement() {
       targetPosition.z - catGroup.position.z
     ).normalize();
 
-    // Reduce speed while turning
-    const turnSpeedModifier = Math.cos(Math.abs(rotationDiff));
-    const currentSpeed = moveSpeed * Math.max(0.3, turnSpeedModifier);
+    const turnSpeedModifier = Math.cos(Math.abs(rotationDiff)) ** 2;
+    const currentSpeed = moveSpeed * Math.max(0.15, turnSpeedModifier);
 
     catGroup.position.x += direction.x * currentSpeed;
     catGroup.position.z += direction.y * currentSpeed;
@@ -1087,7 +1094,11 @@ function updateMovement() {
     isMoving = false;
     isWalking = false;
     targetPosition = null;
-    head.rotation.y = 0;
+
+    // Smooth head reset
+    const headRotationDiff = 0 - currentHeadRotation;
+    currentHeadRotation += headRotationDiff * HEAD_ROTATION_SPEED;
+    head.rotation.y = currentHeadRotation;
 
     rightFrontLeg.rotation.z = 0;
     leftBackLeg.rotation.z = 0;
@@ -1103,19 +1114,6 @@ const mainControls = document.getElementById("mainControls");
 const customizeButton = document.getElementById("customizeButton");
 const customizeMenu = document.getElementById("customizeMenu");
 const closeCustomizeButton = document.getElementById("closeCustomize");
-
-// ============= FPS =============
-
-let fps = 0;
-let lastFrameTime = performance.now();
-
-function updateFPS() {
-  const currentTime = performance.now();
-  const deltaTime = currentTime - lastFrameTime;
-  fps = 1000 / deltaTime;
-  lastFrameTime = currentTime;
-  document.getElementById("fpsValue").textContent = Math.round(fps);
-}
 
 // ============= MENU CUSTOMIZE  =============
 
@@ -1409,8 +1407,6 @@ function animate() {
 
   controls.update();
   renderer.render(mainScene, activeCamera);
-
-  updateFPS();
 }
 
 animate();
