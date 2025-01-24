@@ -303,7 +303,9 @@ function createEnvironment() {
   const tv = new THREE.Mesh(
     new THREE.BoxGeometry(4.5, 2.5, 0.2),
     new THREE.MeshStandardMaterial({ color: 0x000000 })
+    
   );
+  
   tv.position.set(0, 3, -6.48);
   tv.castShadow = true;
   tv.receiveShadow = true;
@@ -349,13 +351,13 @@ function createEnvironment() {
 
   // Ultra-high quality shadow settings
   ceilingLight.castShadow = true;
-  ceilingLight.shadow.mapSize.width = 8192;   // Maximum resolution
-  ceilingLight.shadow.mapSize.height = 8192;  // Maximum resolution
+  ceilingLight.shadow.mapSize.width = 8192; // Maximum resolution
+  ceilingLight.shadow.mapSize.height = 8192; // Maximum resolution
   ceilingLight.shadow.camera.near = 0.1;
   ceilingLight.shadow.camera.far = 20;
-  ceilingLight.shadow.bias = -0.0001;         // Ultra-fine bias
-  ceilingLight.shadow.normalBias = 0.005;     // Reduced for sharp details
-  ceilingLight.shadow.radius = 4;             // Increased blur
+  ceilingLight.shadow.bias = -0.0001; // Ultra-fine bias
+  ceilingLight.shadow.normalBias = 0.005; // Reduced for sharp details
+  ceilingLight.shadow.radius = 4; // Increased blur
   ceilingLight.shadow.blurSamples = 32;
 
   mainScene.add(ambientLight);
@@ -368,28 +370,102 @@ function createEnvironment() {
 
 function createStars(scene) {
   const starsGroup = new THREE.Group();
-  const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
-  const starGeometry = new THREE.BoxGeometry(0.15, 0.15, 0.15);
-  const minDistance = 75;
-  const maxDistance = 125;
+  const starGeometry = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+  const minRadius = 90;
+  const maxRadius = 130;
 
-  for (let i = 0; i < 5000; i++) {
+  // Shooting star setup
+  const shootingStarGeometry = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+  const shootingStarMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffffcc,
+    transparent: true,
+  });
+
+  for (let i = 0; i < 10000; i++) {
+    const starMaterial = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+    });
     const star = new THREE.Mesh(starGeometry, starMaterial);
-    const x =
-      (Math.random() - 0.5) * maxDistance +
-      Math.sign(Math.random() - 0.5) * minDistance;
-    const y =
-      (Math.random() - 0.5) * maxDistance +
-      Math.sign(Math.random() - 0.5) * minDistance;
-    const z =
-      (Math.random() - 0.5) * maxDistance +
-      Math.sign(Math.random() - 0.5) * minDistance;
+
+    const radius = minRadius + Math.random() * (maxRadius - minRadius);
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+
+    const x = radius * Math.sin(phi) * Math.cos(theta);
+    const y = radius * Math.sin(phi) * Math.sin(theta);
+    const z = radius * Math.cos(phi);
 
     star.position.set(x, y, z);
+
+    star.userData.twinkleSpeed = 0.5 + Math.random() * 3;
+    star.userData.twinkleOffset = Math.random() * Math.PI * 2;
+    star.userData.baseScale = 0.6 + Math.random() * 0.8;
+
     starsGroup.add(star);
   }
 
   scene.add(starsGroup);
+
+  function createShootingStar() {
+    const star = new THREE.Mesh(
+      shootingStarGeometry,
+      shootingStarMaterial.clone()
+    );
+    const startAngle = Math.random() * Math.PI * 2;
+    const distance = maxRadius;
+
+    star.position.set(
+      distance * Math.cos(startAngle),
+      distance * Math.sin(startAngle),
+      (Math.random() - 0.5) * distance
+    );
+
+    scene.add(star);
+
+    const endAngle = startAngle + Math.PI / 4;
+    const duration = 1.5;
+    const startTime = performance.now();
+
+    function animateShootingStar() {
+      const elapsed = (performance.now() - startTime) / 1000;
+      const progress = elapsed / duration;
+
+      if (progress < 1) {
+        const currentAngle = startAngle + (endAngle - startAngle) * progress;
+        star.position.x = distance * Math.cos(currentAngle);
+        star.position.y = distance * Math.sin(currentAngle);
+        star.material.opacity = 1 - progress;
+        requestAnimationFrame(animateShootingStar);
+      } else {
+        scene.remove(star);
+        star.material.dispose();
+      }
+    }
+
+    animateShootingStar();
+  }
+
+  function animateStars() {
+    starsGroup.children.forEach((star) => {
+      const time = performance.now() * 0.001;
+      const twinkle = Math.sin(
+        time * star.userData.twinkleSpeed + star.userData.twinkleOffset
+      );
+
+      // Reduced scale variation
+      const scale = star.userData.baseScale * (1 + twinkle * 0.2);
+      star.scale.set(scale, scale, scale);
+
+      // Softer opacity changes
+      star.material.opacity = 0.3 + twinkle * 0.4;
+
+    });
+
+    requestAnimationFrame(animateStars);
+  }
+
+  animateStars();
 }
 
 function createCatBed() {
@@ -397,19 +473,19 @@ function createCatBed() {
 
   // Base/frame
   const base = new THREE.Mesh(
-    new THREE.BoxGeometry(3, 0.3, 2.2),
+    new THREE.BoxGeometry(3, 0.2, 2.2),
     new THREE.MeshStandardMaterial({
       color: 0x105179,
     })
   );
 
   const back = new THREE.Mesh(
-    new THREE.BoxGeometry(3, 0.8, 0.3),
+    new THREE.BoxGeometry(3, 0.7, 0.3),
     new THREE.MeshStandardMaterial({
       color: 0x105179,
     })
   );
-  back.position.set(0, 0.5, 0.95);
+  back.position.set(0, 0.4, 0.95);
 
   const leftArm = new THREE.Mesh(
     new THREE.BoxGeometry(0.3, 0.5, 2),
@@ -427,7 +503,7 @@ function createCatBed() {
     new THREE.BoxGeometry(2.1, 0.2, 1.7),
     new THREE.MeshStandardMaterial({ color: 0x1d7bb6 })
   );
-  cushion.position.set(0, 0.2, -0.1);
+  cushion.position.set(0, 0.15, -0.1);
   cushion.castShadow = true;
   cushion.receiveShadow = true;
 
@@ -944,7 +1020,7 @@ function onFloorClick(event) {
   if (intersects.length > 0) {
     const point = intersects[0].point;
     targetPosition = point;
-    isMoving = true;;
+    isMoving = true;
 
     const direction = new THREE.Vector2(
       targetPosition.x - catGroup.position.x,
@@ -963,7 +1039,7 @@ mainScene.add(walkableZones);
 let tailRotation = 0;
 let isBlinking = false;
 let blinkTime = 0;
-let nextBlink = 600;
+let nextBlink = 300;
 let holdClosedTime = 0;
 let isWalking = false;
 let walkTime = 0;
@@ -973,25 +1049,24 @@ let targetPosition = null;
 let isMoving = false;
 
 let currentHeadRotation = 0;
-const HEAD_ROTATION_SPEED = 0.03;
+const HEAD_ROTATION_SPEED = 0.02;
 
-const BASE_MOVE_SPEED = 0.015;
-let getScreenSizeFactor = () => Math.min(window.innerWidth, window.innerHeight) / 1000;
-let moveSpeed = BASE_MOVE_SPEED * getScreenSizeFactor();
-console.log(moveSpeed);
+const BASE_MOVE_SPEED = 0.03;
 
-const rotationSpeed = 0.01;
+let moveSpeed = BASE_MOVE_SPEED;
+
+const rotationSpeed = 0.015;
 const targetRotation = new THREE.Euler();
 
 // ============= ANIMATION FUNCTIONS =============
 
 function updateTail() {
-  tailBase.rotation.y = Math.sin(tailRotation) * 0.1;
-  tailRotation += 0.03;
+  tailBase.rotation.y = Math.sin(tailRotation) * 0.15;
+  tailRotation += 0.07;
 }
 
 function updateBlinking() {
-  blinkTime += 1;
+  blinkTime += 1.2;
 
   if (!isBlinking && blinkTime >= nextBlink) {
     isBlinking = true;
@@ -1000,7 +1075,7 @@ function updateBlinking() {
   }
 
   if (isBlinking) {
-    const blinkPhase = blinkTime * 0.03;
+    const blinkPhase = blinkTime * 0.04;
 
     if (blinkPhase < Math.PI / 2) {
       // Closing phase
@@ -1031,7 +1106,7 @@ function updateBlinking() {
         leftPupil.scale.y = 1;
         rightPupil.scale.y = 1;
         blinkTime = 0;
-        nextBlink = 600;
+        nextBlink = 300;
       }
     }
   }
@@ -1041,7 +1116,7 @@ function updateWalking() {
   if (!isWalking) return;
 
   walkTime += 0.08;
-  const legRotation = Math.sin(walkTime) * 0.4;
+  const legRotation = Math.sin(walkTime) * 0.3;
   rightFrontLeg.rotation.z = legRotation;
   leftBackLeg.rotation.z = legRotation;
   leftFrontLeg.rotation.z = -legRotation;
@@ -1059,19 +1134,22 @@ function updateMovement() {
   ).length();
 
   if (distance > 0.1) {
-    const targetAngle = Math.atan2(
-      targetPosition.x - catGroup.position.x,
-      targetPosition.z - catGroup.position.z
-    ) - Math.PI / 2;
+    const targetAngle =
+      Math.atan2(
+        targetPosition.x - catGroup.position.x,
+        targetPosition.z - catGroup.position.z
+      ) -
+      Math.PI / 2;
 
     const currentRotation = catGroup.rotation.y;
     let rotationDiff = targetAngle - currentRotation;
 
-    while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2;
+    while (rotationDiff > Math.PI) rotationDiff -= Math.PI * 2; //???
     while (rotationDiff < -Math.PI) rotationDiff += Math.PI * 2;
 
     // Smooth head rotation
-    const targetHeadRotation = Math.sign(rotationDiff) * Math.min(Math.abs(rotationDiff), Math.PI / 4);
+    const targetHeadRotation =
+      Math.sign(rotationDiff) * Math.min(Math.abs(rotationDiff), Math.PI / 4);
     const headRotationDiff = targetHeadRotation - currentHeadRotation;
     currentHeadRotation += headRotationDiff * HEAD_ROTATION_SPEED;
     head.rotation.y = currentHeadRotation;
@@ -1391,25 +1469,44 @@ document.getElementById("resetSize").addEventListener("click", () => {
 
 // ============= ANIMATION FUNCTION =============
 
-function animate() {
-  requestAnimationFrame(animate);
+const FIXED_TIME_STEP = 1 / 60; // 60 FPS
+let previousTime = 0;
+let accumulator = 0;
+
+function draw(currentTime) {
+  requestAnimationFrame(draw);
+
+  if (!previousTime) previousTime = currentTime;
+
+  let deltaTime = (currentTime - previousTime) / 1000;
+  previousTime = currentTime;
+
+  if (deltaTime > 0.2) deltaTime = 0.25;
+
+  accumulator += deltaTime;
+
+  while (accumulator >= FIXED_TIME_STEP) {
+    if (isCustomizing) {
+      customizeOrbitControls.update();
+    } else {
+      updateTail();
+      updateBlinking();
+      updateWalking();
+      updateMovement();
+      updateCamera();
+      controls.update();
+    }
+    accumulator -= FIXED_TIME_STEP;
+  }
 
   if (isCustomizing) {
-    customizeOrbitControls.update();
     renderer.render(customizeScene, customizeCamera);
-    return;
+  } else {
+    renderer.render(mainScene, activeCamera);
   }
-  updateTail();
-  updateBlinking();
-  updateWalking();
-  updateMovement();
-  updateCamera();
-
-  controls.update();
-  renderer.render(mainScene, activeCamera);
 }
 
-animate();
+draw(0);
 
 // ============= WINDOWS RESIZE =============
 
@@ -1424,6 +1521,15 @@ window.addEventListener("resize", () => {
 
   customizeCamera.aspect = width / height;
   customizeCamera.updateProjectionMatrix();
-
-  moveSpeed = BASE_MOVE_SPEED * getScreenSizeFactor();
 });
+
+window.requestAnimFrame = (function () {
+  return (
+    window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    function (callback) {
+      window.setTimeout(callback, 1000 / 60);
+    }
+  );
+})();
